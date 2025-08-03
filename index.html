@@ -4,41 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Viajero Consentido - Tu App de Viajes Compartidos</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- LeafletJS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Custom Styles -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #FDFBF8;
+            background-color: #FDFBF8; /* Warm neutral background */
         }
         .nav-link {
             transition: all 0.3s ease;
             cursor: pointer;
         }
         .nav-link.active {
-            color: #2563EB;
-            border-bottom: 2px solid #2563EB;
+            color: #3B82F6; /* Subtle blue accent */
+            border-bottom: 2px solid #3B82F6;
         }
         .nav-link:not(.active):hover {
-            color: #6B7280;
+            color: #4B5563;
         }
-        .form-input, .form-select {
+        .btn {
             transition: all 0.3s ease;
         }
         .btn-primary {
-            background-color: #2563EB;
+            background-color: #3B82F6;
             color: white;
-            transition: background-color 0.3s ease;
         }
         .btn-primary:hover {
-            background-color: #1D4ED8;
+            background-color: #2563EB;
         }
         .btn-secondary {
             background-color: #E5E7EB;
             color: #374151;
-            transition: background-color 0.3s ease;
         }
         .btn-secondary:hover {
             background-color: #D1D5DB;
@@ -61,10 +69,15 @@
         .hidden-section {
             display: none;
         }
+        /* Ensure Leaflet map renders correctly */
+        .leaflet-container {
+            height: 100%;
+            width: 100%;
+        }
     </style>
     <!-- Chosen Palette: Warm Neutrals & Calm Blue -->
-    <!-- Application Structure Plan: Se ha diseñado una SPA con navegación por pestañas (Buscar Viaje, Ofrecer Viaje, Mis Viajes, Perfil). Esta estructura orientada a tareas es la más intuitiva para los usuarios, ya que separa claramente los dos flujos principales (buscar y ofrecer) y centraliza las gestiones personales en "Mis Viajes". La vista por defecto es "Buscar Viaje", el caso de uso más común, para una experiencia de entrada inmediata y eficiente. El flujo interactivo se gestiona con JavaScript para mostrar/ocultar secciones, manteniendo al usuario en una única página. -->
-    <!-- Visualization & Content Choices: Report Info -> Goal -> Viz/Presentation Method -> Interaction -> Justification -> Library/Method. 1. Búsqueda de Viajes -> Organizar/Encontrar -> Formulario con filtros -> El usuario completa campos y presiona "Buscar" para filtrar la lista -> UI estándar y eficiente -> HTML/JS. 2. Listado de Viajes -> Comparar/Informar -> Cuadrícula de tarjetas con info clave -> Click en tarjeta abre modal con detalles -> Permite escaneo rápido y profundización opcional -> HTML/JS. 3. Cálculo de Precio -> Informar/Empoderar -> Slider interactivo en formulario "Ofrecer Viaje" -> El conductor ajusta el precio y ve el costo por pasajero en tiempo real -> Transparencia y control para el conductor -> HTML/JS. 4. Flujo de Confirmación -> Organizar/Accionar -> Tarjetas en "Mis Viajes" con estados y botones -> Click en botones "Aceptar/Cancelar" actualiza el estado -> Centraliza acciones y notificaciones del usuario -> HTML/JS. 5. Diagrama de Flujo -> Informar -> Diagrama visual simple -> Estático -> Explica el proceso de la app de forma rápida -> HTML/CSS. -->
+    <!-- Application Structure Plan: A task-oriented Single Page Application (SPA) with tab-based navigation ("Find a Ride", "Offer a Ride", "My Trips", "My Profile"). This structure was chosen because it cleanly separates the primary user goals, making the app highly intuitive. "Find a Ride" is the default view for immediate utility. All interactions are handled with JavaScript to show/hide sections, providing a seamless experience without page reloads. -->
+    <!-- Visualization & Content Choices: Report Info -> Goal -> Viz/Presentation Method -> Interaction -> Justification -> Library/Method. 1. Find/Offer Rides -> User Input -> Multi-field forms -> User completes fields to define criteria -> Standard, effective method for data entry -> HTML/JS. 2. Trip Listings -> Compare Options -> Grid of cards -> User scans key info, clicks for detail -> Efficiently presents multiple options for comparison -> HTML/JS. 3. Trip Route -> Understand Path -> Interactive Map -> User can pan/zoom the route map -> Provides clear geographical context for the trip -> Leaflet.js. 4. Price Setting -> Empower Driver -> Interactive slider -> Driver adjusts price and sees real-time cost per passenger -> Gives driver control and transparency -> HTML/JS. 5. User Flow/Status -> Inform/Action -> Status badges and contextual buttons in "My Trips" -> User can quickly see status and take action (cancel/accept) -> Centralizes user tasks and notifications -> HTML/JS. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 </head>
 <body class="text-gray-800">
@@ -78,14 +91,14 @@
                     </div>
                     <div class="hidden md:block">
                         <div class="ml-10 flex items-baseline space-x-4">
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 active" data-section="buscar-viaje">Buscar Viaje</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-500" data-section="ofrecer-viaje">Ofrecer Viaje</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-500" data-section="mis-viajes">Mis Viajes</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-500" data-section="perfil">Mi Perfil</a>
+                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 active" data-section="find-ride">Buscar Viaje</a>
+                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-500" data-section="offer-ride">Ofrecer Viaje</a>
+                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-500" data-section="my-trips">Mis Viajes</a>
+                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-500" data-section="my-profile">Mi Perfil</a>
                         </div>
                     </div>
                     <div class="flex items-center">
-                        <button id="authButton" class="btn-primary px-4 py-2 rounded-md text-sm font-medium">Iniciar Sesión</button>
+                        <button id="auth-button" class="btn btn-primary px-4 py-2 rounded-md text-sm font-medium">Iniciar Sesión</button>
                     </div>
                 </div>
             </nav>
@@ -93,39 +106,57 @@
 
         <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             
-            <section id="buscar-viaje" class="app-section">
+            <!-- Find a Ride Section -->
+            <section id="find-ride" class="app-section">
                 <div class="text-center mb-12">
-                    <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">Encuentra tu próximo viaje</h1>
+                    <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">Encuentra tu Próximo Viaje</h1>
                     <p class="mt-4 text-lg leading-8 text-gray-600">Conectamos conductores con asientos libres y pasajeros que van en la misma dirección.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-md max-w-4xl mx-auto">
-                    <form id="search-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                        <div>
-                            <label for="origen" class="block text-sm font-medium text-gray-700">Origen</label>
-                            <input type="text" id="origen" name="origen" class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej: Santa Fe">
+                <div class="bg-white p-6 rounded-xl shadow-md max-w-5xl mx-auto">
+                    <form id="search-form" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                            <div>
+                                <label for="origin" class="block text-sm font-medium text-gray-700">Origen</label>
+                                <input type="text" id="origin" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej: Santa Fe">
+                            </div>
+                            <div>
+                                <label for="destination" class="block text-sm font-medium text-gray-700">Destino</label>
+                                <input type="text" id="destination" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej: Rafaela">
+                            </div>
+                            <div>
+                                <label for="date-from" class="block text-sm font-medium text-gray-700">Desde</label>
+                                <input type="date" id="date-from" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="date-to" class="block text-sm font-medium text-gray-700">Hasta</label>
+                                <input type="date" id="date-to" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full py-2 rounded-md font-semibold">Buscar</button>
                         </div>
-                        <div>
-                            <label for="destino" class="block text-sm font-medium text-gray-700">Destino</label>
-                            <input type="text" id="destino" name="destino" class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej: Rafaela">
+                         <div class="flex items-center gap-4 pt-4 border-t">
+                            <div class="flex-grow">
+                                <label for="saved-filters" class="block text-sm font-medium text-gray-700">Cargar Filtro Guardado</label>
+                                <select id="saved-filters" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="">-- Seleccionar --</option>
+                                </select>
+                            </div>
+                            <button type="button" id="save-filter-btn" class="btn btn-secondary mt-6 py-2 px-4 rounded-md font-semibold">Guardar Filtro</button>
                         </div>
-                        <div>
-                            <label for="fecha" class="block text-sm font-medium text-gray-700">Fecha</label>
-                            <input type="date" id="fecha" name="fecha" class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        </div>
-                        <button type="submit" class="btn-primary w-full py-2 rounded-md font-semibold">Buscar</button>
                     </form>
                 </div>
 
                 <div id="trip-results" class="mt-12">
                     <h2 class="text-2xl font-bold mb-6 text-center">Viajes Disponibles</h2>
                     <div id="trip-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Trip cards will be injected here -->
                     </div>
                     <p id="no-results" class="text-center text-gray-500 hidden mt-8">No se encontraron viajes con esos criterios. Intenta una búsqueda más amplia.</p>
                 </div>
             </section>
 
-            <section id="ofrecer-viaje" class="app-section hidden-section">
+            <!-- Offer a Ride Section -->
+            <section id="offer-ride" class="app-section hidden-section">
                 <div class="max-w-4xl mx-auto">
                     <div class="text-center mb-12">
                         <h1 class="text-4xl font-bold tracking-tight text-gray-900">Ofrece tu viaje</h1>
@@ -136,27 +167,37 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="offer-origen" class="block text-sm font-medium text-gray-700">Origen</label>
-                                    <input type="text" id="offer-origen" required class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Ciudad de Salida">
+                                    <input type="text" id="offer-origen" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Ciudad de Salida">
                                 </div>
                                 <div>
                                     <label for="offer-destino" class="block text-sm font-medium text-gray-700">Destino</label>
-                                    <input type="text" id="offer-destino" required class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Ciudad de Llegada">
+                                    <input type="text" id="offer-destino" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Ciudad de Llegada">
                                 </div>
                             </div>
                              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="offer-fecha" class="block text-sm font-medium text-gray-700">Fecha de Salida</label>
-                                    <input type="date" id="offer-fecha" required class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                    <label for="offer-fecha-desde" class="block text-sm font-medium text-gray-700">Fecha de Salida (Desde)</label>
+                                    <input type="date" id="offer-fecha-desde" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                                 </div>
                                 <div>
-                                    <label for="offer-hora" class="block text-sm font-medium text-gray-700">Hora de Salida</label>
-                                    <input type="time" id="offer-hora" required class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                    <label for="offer-fecha-hasta" class="block text-sm font-medium text-gray-700">Fecha de Salida (Hasta)</label>
+                                    <input type="date" id="offer-fecha-hasta" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="offer-hora-desde" class="block text-sm font-medium text-gray-700">Hora de Salida (Desde)</label>
+                                    <input type="time" id="offer-hora-desde" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                </div>
+                                <div>
+                                    <label for="offer-hora-hasta" class="block text-sm font-medium text-gray-700">Hora de Salida (Hasta)</label>
+                                    <input type="time" id="offer-hora-hasta" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="offer-asientos" class="block text-sm font-medium text-gray-700">Asientos Disponibles</label>
-                                    <select id="offer-asientos" required class="form-select mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                    <select id="offer-asientos" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                                         <option>1</option>
                                         <option>2</option>
                                         <option>3</option>
@@ -165,7 +206,7 @@
                                 </div>
                                 <div>
                                     <label for="offer-equipaje" class="block text-sm font-medium text-gray-700">Capacidad de Equipaje</label>
-                                    <select id="offer-equipaje" required class="form-select mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                    <select id="offer-equipaje" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                                         <option>Pequeña</option>
                                         <option>Mediana</option>
                                         <option>Grande</option>
@@ -173,6 +214,39 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="offer-fumar" class="flex items-center text-sm font-medium text-gray-700">
+                                        <input type="checkbox" id="offer-fumar" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 mr-2">
+                                        Permite Fumar
+                                    </label>
+                                </div>
+                                <div>
+                                    <label for="offer-mascotas" class="flex items-center text-sm font-medium text-gray-700">
+                                        <input type="checkbox" id="offer-mascotas" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 mr-2">
+                                        Permite Mascotas
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="offer-vehiculo" class="block text-sm font-medium text-gray-700">Tipo de Vehículo</label>
+                                <select id="offer-vehiculo" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                    <option>Sedán</option>
+                                    <option>SUV</option>
+                                    <option>Camioneta</option>
+                                    <option>Compacto</option>
+                                    <option>Otro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="offer-notas" class="block text-sm font-medium text-gray-700">Notas Adicionales</label>
+                                <textarea id="offer-notas" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Música tranquila, paradas para café, etc."></textarea>
+                            </div>
+                            <div>
+                                <label for="offer-whatsapp" class="block text-sm font-medium text-gray-700">Número de WhatsApp</label>
+                                <input type="tel" id="offer-whatsapp" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="+54 9 3492 123456">
+                            </div>
+
                             <div class="border-t border-gray-200 pt-6">
                                 <h3 class="text-lg font-medium text-gray-900">Costo del Viaje</h3>
                                 <p class="text-sm text-gray-500 mt-1">Calcularemos un precio sugerido. Puedes ajustarlo hasta un 15%.</p>
@@ -191,26 +265,38 @@
                                 </div>
                             </div>
                             <div class="text-right">
-                                <button type="submit" class="btn-primary px-6 py-2 rounded-md font-semibold">Publicar Viaje</button>
+                                <button type="submit" class="btn btn-primary px-6 py-2 rounded-md font-semibold">Publicar Viaje</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </section>
 
-            <section id="mis-viajes" class="app-section hidden-section">
+            <!-- My Trips Section -->
+            <section id="my-trips" class="app-section hidden-section">
                  <div class="max-w-4xl mx-auto">
                     <div class="text-center mb-12">
                         <h1 class="text-4xl font-bold tracking-tight text-gray-900">Mis Viajes y Solicitudes</h1>
                         <p class="mt-4 text-lg leading-8 text-gray-600">Gestiona tus viajes publicados y las solicitudes de pasajeros.</p>
                     </div>
                     <div id="my-trips-content" class="space-y-8">
-                        <p class="text-center text-gray-500">Aquí verás los viajes que publiques y las solicitudes de los pasajeros que quieran unirse.</p>
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Mis Viajes Publicados (Conductor)</h2>
+                        <div id="my-offers-list" class="space-y-4">
+                            <!-- Driver's offers will be injected here -->
+                            <p class="text-center text-gray-500">No has publicado ningún viaje aún.</p>
+                        </div>
+
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 mt-8">Mis Solicitudes de Viaje (Pasajero)</h2>
+                        <div id="my-requests-list" class="space-y-4">
+                            <!-- Passenger's requests will be injected here -->
+                            <p class="text-center text-gray-500">No tienes solicitudes de viaje activas como pasajero.</p>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <section id="perfil" class="app-section hidden-section">
+            <!-- My Profile Section -->
+            <section id="my-profile" class="app-section hidden-section">
                 <div class="max-w-2xl mx-auto">
                     <div class="text-center mb-12">
                         <h1 class="text-4xl font-bold tracking-tight text-gray-900">Mi Perfil</h1>
@@ -227,14 +313,18 @@
                         <form id="profile-form" class="space-y-4">
                             <div>
                                 <label for="profile-nombre" class="block text-sm font-medium text-gray-700">Nombre Completo</label>
-                                <input type="text" id="profile-nombre" class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Tu Nombre">
+                                <input type="text" id="profile-nombre" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Tu Nombre">
+                            </div>
+                            <div>
+                                <label for="profile-edad" class="block text-sm font-medium text-gray-700">Edad</label>
+                                <input type="number" id="profile-edad" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Ej: 30">
                             </div>
                             <div>
                                 <label for="profile-whatsapp" class="block text-sm font-medium text-gray-700">Número de WhatsApp</label>
-                                <input type="tel" id="profile-whatsapp" class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="+54 9 3492 123456">
+                                <input type="tel" id="profile-whatsapp" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="+54 9 3492 123456">
                             </div>
                             <div class="text-right pt-4">
-                                <button type="submit" class="btn-primary px-6 py-2 rounded-md font-semibold">Guardar Cambios</button>
+                                <button type="submit" class="btn btn-primary px-6 py-2 rounded-md font-semibold">Guardar Cambios</button>
                             </div>
                         </form>
                     </div>
@@ -243,149 +333,117 @@
         </main>
     </div>
 
-    <div id="trip-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div class="modal-backdrop fixed inset-0"></div>
-        <div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative transform scale-95">
-        </div>
+    <!-- Modals Container -->
+    <div id="modal-container">
+        <!-- Modals will be injected here -->
     </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const app = {
+        // STATE MANAGEMENT
         state: {
             isLoggedIn: false,
-            currentUser: {
-                name: 'Usuario Anónimo',
-                rating: 4.8,
-                trips: 15,
-                whatsapp: ''
-            },
-            currentSection: 'buscar-viaje',
+            currentUser: null,
+            currentSection: 'find-ride',
+            mapInstance: null,
         },
         
+        // MOCK DATA (Simulating Backend)
         mockData: {
+            users: {
+                'user1': { name: 'Juan Pérez', age: 28, whatsapp: '+5493492123456', rating: 4.8, trips: 15, isNew: false }
+            },
             trips: [
-                { id: 1, driver: 'Ana García', rating: 4.9, origin: 'Santa Fe', destination: 'Rafaela', via: ['Esperanza'], date: '2025-08-15', time: '08:00', seats: 2, price: 2500, luggage: 'Mediana', smoking: false, pets: false, vehicle: 'Toyota Corolla', notes: 'Salida puntual. Música tranquila y paradas cortas.' },
-                { id: 2, driver: 'Carlos Ruiz', rating: 4.7, origin: 'Rosario', destination: 'Rafaela', via: ['San Lorenzo', 'Sunchales'], date: '2025-08-15', time: '17:30', seats: 1, price: 3200, luggage: 'Pequeña', smoking: true, pets: false, vehicle: 'Fiat Cronos', notes: 'Puedo desviarme un poco de la ruta si es necesario.' },
-                { id: 3, driver: 'Lucía Méndez', rating: 5.0, origin: 'Paraná', destination: 'Sunchales', via: ['Santa Fe', 'Rafaela'], date: '2025-08-16', time: '10:00', seats: 3, price: 2800, luggage: 'Grande', smoking: false, pets: true, vehicle: 'Renault Duster', notes: 'Viajo con mi perro, es amigable. Amplio espacio para equipaje.' },
-                { id: 4, driver: 'Javier Sosa', rating: 4.6, origin: 'Santa Fe', destination: 'Reconquista', via: ['San Justo'], date: '2025-08-17', time: '06:00', seats: 2, price: 4500, luggage: 'Mediana', smoking: false, pets: false, vehicle: 'Chevrolet Onix', notes: 'Viaje directo, sin paradas.' },
+                { id: 1, driver: 'Ana García', rating: 4.9, origin: 'Santa Fe', dest: 'Rafaela', date: '2025-08-15', time: '08:00', seats: 2, price: 2500, luggage: 'Mediana', smoking: false, pets: false, vehicle: 'Toyota Corolla', notes: 'Salida puntual. Música tranquila y paradas cortas.', polyline: [[-31.61067, -60.69729], [-31.53, -60.9], [-31.25, -61.2], [-31.2442, -61.4916]] },
+                { id: 2, driver: 'Carlos Ruiz', rating: 4.7, origin: 'Rosario', dest: 'Rafaela', date: '2025-08-15', time: '17:30', seats: 1, price: 3200, luggage: 'Pequeña', smoking: true, pets: false, vehicle: 'Fiat Cronos', notes: 'Puedo desviarme un poco de la ruta si es necesario.', polyline: [[-32.9477, -60.6305], [-32.5, -60.7], [-31.8, -61.0], [-31.2442, -61.4916]] },
+                { id: 3, driver: 'Lucía Méndez', rating: 5.0, origin: 'Paraná', dest: 'Sunchales', date: '2025-08-16', time: '10:00', seats: 3, price: 2800, luggage: 'Grande', smoking: false, pets: true, vehicle: 'Renault Duster', notes: 'Viajo con mi perro, es amigable. Amplio espacio para equipaje.', polyline: [[-31.7431, -60.5134], [-31.61067, -60.69729], [-31.2442, -61.4916], [-30.9453, -61.5623]] },
             ],
-            myTrips: [],
-            cities: {
-                'Santa Fe': { 'Rafaela': 100, 'Rosario': 170, 'Paraná': 25, 'Reconquista': 325 },
-                'Rosario': { 'Rafaela': 240, 'Santa Fe': 170 },
-                'Paraná': { 'Rafaela': 125, 'Sunchales': 160 }
-            }
+            myTrips: [ // Trips where current user is passenger
+                { tripId: 2, status: 'requested', as: 'passenger' },
+                { tripId: 3, status: 'confirmed', as: 'passenger' }
+            ],
+            myOffers: [ // Trips offered by current user (driver)
+                { id: 101, origin: 'Rafaela', dest: 'Córdoba', date: '2025-08-20', seats: 3, availableSeats: 2, price: 4000, requests: [ { passengerName: 'Maria Sol', rating: 4.9, status: 'pending', requestedTripId: 101 } ] }
+            ],
+            savedFilters: {}
         },
 
+        // INITIALIZATION
         init() {
             this.cacheDOM();
             this.bindEvents();
+            this.loadFilters();
             this.renderTrips(this.mockData.trips);
             this.updateUIForAuthState();
         },
 
+        // CACHE DOM ELEMENTS
         cacheDOM() {
             this.dom = {
                 navLinks: document.querySelectorAll('.nav-link'),
                 sections: document.querySelectorAll('.app-section'),
-                authButton: document.getElementById('authButton'),
+                authButton: document.getElementById('auth-button'),
                 searchForm: document.getElementById('search-form'),
                 tripList: document.getElementById('trip-list'),
                 noResults: document.getElementById('no-results'),
-                modal: document.getElementById('trip-modal'),
-                modalContent: document.querySelector('.modal-content'),
-                modalBackdrop: document.querySelector('.modal-backdrop'),
+                modalContainer: document.getElementById('modal-container'),
+                savedFiltersSelect: document.getElementById('saved-filters'),
+                saveFilterBtn: document.getElementById('save-filter-btn'),
+                
+                // Offer Ride elements
                 offerForm: document.getElementById('offer-form'),
+                offerOrigen: document.getElementById('offer-origen'),
+                offerDestino: document.getElementById('offer-destino'),
+                offerAsientos: document.getElementById('offer-asientos'),
                 priceSugerido: document.getElementById('precio-sugerido'),
                 priceInfo: document.getElementById('precio-info'),
                 priceAdjustment: document.getElementById('price-adjustment'),
                 adjustmentValue: document.getElementById('adjustment-value'),
                 precioFinalPasajero: document.getElementById('precio-final-pasajero'),
-                offerAsientos: document.getElementById('offer-asientos'),
-                myTripsContent: document.getElementById('my-trips-content'),
+
+                // My Trips elements
+                myOffersList: document.getElementById('my-offers-list'),
+                myRequestsList: document.getElementById('my-requests-list'),
+
+                // My Profile elements
                 profileName: document.getElementById('profile-name'),
                 profileRating: document.getElementById('profile-rating'),
                 profileForm: document.getElementById('profile-form'),
+                profileNombre: document.getElementById('profile-nombre'),
+                profileEdad: document.getElementById('profile-edad'),
+                profileWhatsapp: document.getElementById('profile-whatsapp'),
             };
         },
 
+        // BIND EVENT LISTENERS
         bindEvents() {
-            this.dom.navLinks.forEach(link => {
-                link.addEventListener('click', (e) => this.handleNav(e));
-            });
+            this.dom.navLinks.forEach(link => link.addEventListener('click', (e) => this.handleNav(e)));
             this.dom.authButton.addEventListener('click', () => this.toggleAuth());
             this.dom.searchForm.addEventListener('submit', (e) => this.handleSearch(e));
             this.dom.tripList.addEventListener('click', (e) => this.handleTripClick(e));
-            this.dom.modalBackdrop.addEventListener('click', () => this.closeModal());
-            this.dom.offerForm.addEventListener('submit', (e) => this.handleOfferSubmit(e));
-            
-            const priceInputs = ['offer-origen', 'offer-destino'];
-            priceInputs.forEach(id => {
-                document.getElementById(id).addEventListener('input', () => this.calculatePrice());
-            });
-            this.dom.priceAdjustment.addEventListener('input', () => this.calculatePrice());
-            this.dom.offerAsientos.addEventListener('change', () => this.calculatePrice());
-        },
+            this.dom.savedFiltersSelect.addEventListener('change', (e) => this.applySavedFilter(e.target.value));
+            this.dom.saveFilterBtn.addEventListener('click', () => this.saveCurrentFilter());
 
-        handleNav(e) {
-            const sectionId = e.target.dataset.section;
-            if (!sectionId) return;
-
-            if (['ofrecer-viaje', 'mis-viajes', 'perfil'].includes(sectionId) && !this.state.isLoggedIn) {
-                alert('Debes iniciar sesión para acceder a esta sección.');
-                return;
+            // Offer Ride events
+            if (this.dom.offerForm) {
+                this.dom.offerForm.addEventListener('submit', (e) => this.handleOfferSubmit(e));
+                const priceInputs = [this.dom.offerOrigen, this.dom.offerDestino];
+                priceInputs.forEach(input => input.addEventListener('input', () => this.calculatePrice()));
+                this.dom.priceAdjustment.addEventListener('input', () => this.calculatePrice());
+                this.dom.offerAsientos.addEventListener('change', () => this.calculatePrice());
             }
 
-            this.state.currentSection = sectionId;
-            
-            this.dom.navLinks.forEach(link => {
-                link.classList.toggle('active', link.dataset.section === sectionId);
-            });
-
-            this.dom.sections.forEach(section => {
-                section.classList.toggle('hidden-section', section.id !== sectionId);
-            });
-            
-            if (sectionId === 'mis-viajes') {
-                this.renderMyTrips();
-            }
-        },
-
-        toggleAuth() {
-            this.state.isLoggedIn = !this.state.isLoggedIn;
-            this.updateUIForAuthState();
-        },
-
-        updateUIForAuthState() {
-            if (this.state.isLoggedIn) {
-                this.dom.authButton.textContent = 'Cerrar Sesión';
-                this.dom.authButton.classList.remove('btn-primary');
-                this.dom.authButton.classList.add('btn-secondary');
-                this.dom.profileName.textContent = 'Juan Pérez';
-            } else {
-                this.dom.authButton.textContent = 'Iniciar Sesión';
-                this.dom.authButton.classList.add('btn-primary');
-                this.dom.authButton.classList.remove('btn-secondary');
-                this.dom.profileName.textContent = 'Usuario Anónimo';
-                if (this.state.currentSection !== 'buscar-viaje') {
-                    document.querySelector('.nav-link[data-section="buscar-viaje"]').click();
-                }
+            // My Profile events
+            if (this.dom.profileForm) {
+                this.dom.profileForm.addEventListener('submit', (e) => this.handleProfileSubmit(e));
             }
         },
         
-        formatCurrency(value) {
-            return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(value);
-        },
-
+        // RENDER FUNCTIONS
         renderTrips(trips) {
             this.dom.tripList.innerHTML = '';
-            if (trips.length === 0) {
-                this.dom.noResults.classList.remove('hidden');
-                return;
-            }
-            this.dom.noResults.classList.add('hidden');
-
+            this.dom.noResults.classList.toggle('hidden', trips.length > 0);
             trips.forEach(trip => {
                 const card = document.createElement('div');
                 card.className = 'card bg-white rounded-lg shadow-md overflow-hidden cursor-pointer p-5 flex flex-col justify-between';
@@ -394,10 +452,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <div class="flex justify-between items-start mb-3">
                             <div class="font-semibold text-gray-500 text-sm">${trip.driver} <span class="text-yellow-500">⭐ ${trip.rating}</span></div>
-                            <div class="text-sm font-bold text-green-600 bg-green-100 px-2 py-1 rounded">${this.formatCurrency(trip.price)}</div>
+                            <div class="text-sm font-bold text-green-600 bg-green-100 px-2 py-1 rounded">$${trip.price.toLocaleString('es-AR')}</div>
                         </div>
-                        <h3 class="text-lg font-bold text-gray-800">${trip.origin} → ${trip.destination}</h3>
-                        <p class="text-gray-600 text-sm mt-1">${new Date(trip.date + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - ${trip.time} hs</p>
+                        <h3 class="text-lg font-bold text-gray-800">${trip.origin} → ${trip.dest}</h3>
+                        <p class="text-gray-600 text-sm mt-1">${new Date(trip.date + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} - ${trip.time} hs</p>
                     </div>
                     <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm text-gray-500">
                         <span>💺 ${trip.seats} asientos</span>
@@ -408,183 +466,599 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.dom.tripList.appendChild(card);
             });
         },
-
-        handleSearch(e) {
-            e.preventDefault();
-            const formData = new FormData(this.dom.searchForm);
-            const origin = formData.get('origen').toLowerCase();
-            const destination = formData.get('destino').toLowerCase();
-            const date = formData.get('fecha');
-
-            const filteredTrips = this.mockData.trips.filter(trip => {
-                const matchOrigin = !origin || trip.origin.toLowerCase().includes(origin) || (trip.via && trip.via.some(v => v.toLowerCase().includes(origin)));
-                const matchDestination = !destination || trip.destination.toLowerCase().includes(destination);
-                const matchDate = !date || trip.date === date;
-                return matchOrigin && matchDestination && matchDate;
-            });
-
-            this.renderTrips(filteredTrips);
-        },
         
-        handleTripClick(e) {
-            const card = e.target.closest('.card');
-            if (card) {
-                const tripId = parseInt(card.dataset.tripId);
-                const trip = this.mockData.trips.find(t => t.id === tripId);
-                this.openModal(trip);
-            }
-        },
-
-        openModal(trip) {
-            this.dom.modalContent.innerHTML = `
-                <div class="p-6 sm:p-8">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-900">${trip.origin} → ${trip.destination}</h2>
-                            <p class="text-gray-600 mt-1">Conducido por <span class="font-semibold">${trip.driver}</span> <span class="text-yellow-500">⭐ ${trip.rating}</span></p>
-                        </div>
-                        <button id="close-modal" class="text-gray-400 hover:text-gray-600">&times;</button>
-                    </div>
-                    
-                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="font-semibold text-gray-800">Fecha y Hora</p>
-                            <p class="text-gray-600">${new Date(trip.date + 'T00:00:00').toLocaleDateString('es-AR', { dateStyle: 'full' })}</p>
-                            <p class="text-gray-600">Salida a las ${trip.time} hs</p>
-                        </div>
-                        <div class="bg-green-50 p-4 rounded-lg">
-                            <p class="font-semibold text-gray-800">Precio por Pasajero</p>
-                            <p class="text-2xl font-bold text-green-700">${this.formatCurrency(trip.price)}</p>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 border-t pt-6">
-                        <h3 class="font-semibold text-gray-800 mb-2">Detalles del Viaje</h3>
-                        <div class="space-y-2 text-gray-700">
-                            <p><strong>Asientos disponibles:</strong> ${trip.seats}</p>
-                            <p><strong>Equipaje permitido:</strong> ${trip.luggage}</p>
-                            <p><strong>Vehículo:</strong> ${trip.vehicle}</p>
-                            <p><strong>Fumadores:</strong> ${trip.smoking ? 'Permitido' : 'No permitido'}</p>
-                            <p><strong>Mascotas:</strong> ${trip.pets ? 'Permitidas' : 'No permitidas'}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6">
-                        <h3 class="font-semibold text-gray-800 mb-2">Notas del Conductor</h3>
-                        <p class="text-gray-700 bg-gray-50 p-4 rounded-lg italic">"${trip.notes}"</p>
-                    </div>
-                </div>
-                <div class="px-6 py-4 bg-gray-50 border-t flex flex-col sm:flex-row gap-2">
-                    <button id="contact-whatsapp" class="btn-primary w-full sm:w-auto flex-grow px-6 py-3 rounded-md font-semibold">Contactar por WhatsApp</button>
-                    <button id="request-trip" class="btn-secondary w-full sm:w-auto px-6 py-3 rounded-md font-semibold">Solicitar unirme al viaje</button>
-                </div>
-            `;
-            this.dom.modal.classList.remove('hidden');
-            this.dom.modal.classList.add('flex');
-            setTimeout(() => this.dom.modalContent.classList.remove('scale-95'), 10);
+        renderModal(content) {
+            this.dom.modalContainer.innerHTML = content;
+            const modal = this.dom.modalContainer.querySelector('.modal');
+            const backdrop = this.dom.modalContainer.querySelector('.modal-backdrop');
+            const closeButtons = this.dom.modalContainer.querySelectorAll('.close-modal');
             
-            document.getElementById('close-modal').addEventListener('click', () => this.closeModal());
-            document.getElementById('request-trip').addEventListener('click', () => {
-                if (!this.state.isLoggedIn) {
-                    alert('Debes iniciar sesión para solicitar unirte a un viaje.');
-                    return;
-                }
-                const existingRequest = this.mockData.myTrips.find(t => t.id === trip.id);
-                if (existingRequest) {
-                    alert('Ya has solicitado unirte a este viaje.');
-                    return;
-                }
-                this.mockData.myTrips.push({...trip, status: 'solicitado'});
-                alert('¡Solicitud enviada! El conductor revisará tu pedido. Puedes ver el estado en "Mis Viajes".');
-                this.closeModal();
-            });
+            setTimeout(() => modal.classList.remove('opacity-0', 'scale-95'), 10);
+            
+            backdrop.addEventListener('click', () => this.closeModal());
+            closeButtons.forEach(btn => btn.addEventListener('click', () => this.closeModal()));
         },
 
         closeModal() {
-            this.dom.modalContent.classList.add('scale-95');
-            setTimeout(() => {
-                this.dom.modal.classList.add('hidden');
-                this.dom.modal.classList.remove('flex');
-            }, 300);
+            const modal = this.dom.modalContainer.querySelector('.modal');
+            if (modal) {
+                modal.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    this.dom.modalContainer.innerHTML = '';
+                    if (this.state.mapInstance) {
+                        this.state.mapInstance.remove();
+                        this.state.mapInstance = null;
+                    }
+                }, 300);
+            }
         },
         
-        calculatePrice() {
-            const origen = document.getElementById('offer-origen').value;
-            const destino = document.getElementById('offer-destino').value;
-            const asientos = parseInt(this.dom.offerAsientos.value);
-            const adjustment = parseInt(this.dom.priceAdjustment.value);
-            
-            this.dom.adjustmentValue.textContent = adjustment;
+        // NAVIGATION HANDLER
+        handleNav(e) {
+            const sectionId = e.target.dataset.section;
+            if (!sectionId || this.state.currentSection === sectionId) return;
 
-            if (!origen || !destino) {
-                this.dom.priceSugerido.textContent = '$0.00';
-                this.dom.precioFinalPasajero.textContent = '$0.00';
-                this.dom.priceInfo.textContent = 'Ingresa origen y destino para calcular.';
+            if (['offer-ride', 'my-trips', 'my-profile'].includes(sectionId) && !this.state.isLoggedIn) {
+                this.showFeedbackModal('Debes iniciar sesión para acceder a esta sección.');
                 return;
             }
 
-            const distance = this.mockData.cities[origen]?.[destino] || 200; 
-            const costPerKm = 50;
-            const basePrice = distance * costPerKm;
+            this.state.currentSection = sectionId;
+            
+            this.dom.navLinks.forEach(link => link.classList.toggle('active', link.dataset.section === sectionId));
+            this.dom.sections.forEach(section => section.classList.toggle('hidden-section', section.id !== sectionId));
 
-            this.dom.priceInfo.textContent = `Basado en una distancia estimada de ${distance} km.`;
-            this.dom.priceSugerido.textContent = this.formatCurrency(basePrice);
+            // Specific logic for sections that need dynamic rendering
+            if (sectionId === 'my-trips') {
+                this.renderMyTrips();
+            } else if (sectionId === 'my-profile') {
+                this.loadProfileData();
+            } else if (sectionId === 'offer-ride') {
+                this.calculatePrice(); // Initialize price calculation when entering offer section
+            }
+        },
+
+        // AUTHENTICATION
+        toggleAuth() {
+            this.state.isLoggedIn = !this.state.isLoggedIn;
+            if (this.state.isLoggedIn) {
+                // Simulate successful login with a mock user
+                this.state.currentUser = this.mockData.users.user1;
+                this.dom.authButton.textContent = 'Cerrar Sesión';
+                this.dom.authButton.classList.replace('btn-primary', 'btn-secondary');
+                // Check if it's a new user for onboarding
+                if (this.state.currentUser.isNew) {
+                   this.showOnboardingModal();
+                } else {
+                    this.showFeedbackModal(`¡Bienvenido de nuevo, ${this.state.currentUser.name}!`);
+                }
+            } else {
+                this.state.currentUser = null;
+                this.dom.authButton.textContent = 'Iniciar Sesión';
+                this.dom.authButton.classList.replace('btn-secondary', 'btn-primary');
+                // Redirect to find-ride if logging out from a restricted section
+                if (this.state.currentSection !== 'find-ride') {
+                    document.querySelector('.nav-link[data-section="find-ride"]').click();
+                }
+                this.showFeedbackModal('Sesión cerrada correctamente.');
+            }
+        },
+        
+        // EVENT HANDLERS
+        handleSearch(e) {
+            e.preventDefault();
+            const formData = new FormData(this.dom.searchForm);
+            const origin = (formData.get('origin') || '').toLowerCase();
+            const dest = (formData.get('destination') || '').toLowerCase();
+            const dateFrom = formData.get('date-from');
+            const dateTo = formData.get('date-to'); // New: date-to
             
-            const finalPriceTotal = basePrice * (1 + adjustment / 100);
-            const pricePerPassenger = finalPriceTotal / asientos;
-            
-            this.dom.precioFinalPasajero.textContent = this.formatCurrency(pricePerPassenger);
+            const filteredTrips = this.mockData.trips.filter(trip => {
+                const matchOrigin = !origin || trip.origin.toLowerCase().includes(origin);
+                const matchDest = !dest || trip.dest.toLowerCase().includes(dest);
+                
+                // Date range matching
+                const tripDate = new Date(trip.date + 'T00:00:00');
+                const filterDateFrom = dateFrom ? new Date(dateFrom + 'T00:00:00') : null;
+                const filterDateTo = dateTo ? new Date(dateTo + 'T00:00:00') : null;
+
+                const matchDate = (!filterDateFrom || tripDate >= filterDateFrom) &&
+                                  (!filterDateTo || tripDate <= filterDateTo);
+
+                return matchOrigin && matchDest && matchDate;
+            });
+            this.renderTrips(filteredTrips);
+        },
+
+        handleTripClick(e) {
+            const card = e.target.closest('.card');
+            if (!card) return;
+            const tripId = parseInt(card.dataset.tripId);
+            const trip = this.mockData.trips.find(t => t.id === tripId);
+            this.showTripDetailModal(trip);
         },
 
         handleOfferSubmit(e) {
             e.preventDefault();
             if (!this.state.isLoggedIn) {
-                alert('Debes iniciar sesión para publicar un viaje.');
+                this.showFeedbackModal('Debes iniciar sesión para publicar un viaje.');
                 return;
             }
-            alert('Viaje publicado con éxito. Podrás gestionarlo desde la sección "Mis Viajes".');
+            // Simulate sending data to backend
+            const formData = new FormData(this.dom.offerForm);
+            const newTrip = {
+                id: this.mockData.trips.length + 100, // Simple ID generation
+                driver: this.state.currentUser.name,
+                rating: this.state.currentUser.rating,
+                origin: formData.get('offer-origen'),
+                dest: formData.get('offer-destino'),
+                date: formData.get('offer-fecha-desde'),
+                time: formData.get('offer-hora-desde'),
+                seats: parseInt(formData.get('offer-asientos')),
+                price: parseFloat(this.dom.precioFinalPasajero.textContent.replace('$', '').replace('.', '').replace(',', '.')), // Get final calculated price
+                luggage: formData.get('offer-equipaje'),
+                smoking: formData.get('offer-fumar') === 'on',
+                pets: formData.get('offer-mascotas') === 'on',
+                vehicle: formData.get('offer-vehiculo'),
+                notes: formData.get('offer-notas'),
+                polyline: this.getMockPolyline(formData.get('offer-origen'), formData.get('offer-destino')) // Mock polyline
+            };
+            this.mockData.trips.push(newTrip);
+            this.mockData.myOffers.push({...newTrip, requests: [], availableSeats: newTrip.seats}); // Add to driver's offers
+            
+            this.showFeedbackModal('Viaje publicado con éxito. Podrás gestionarlo desde la sección "Mis Viajes".');
             this.dom.offerForm.reset();
-            this.calculatePrice();
+            this.calculatePrice(); // Reset price calculation
+            document.querySelector('.nav-link[data-section="my-trips"]').click(); // Go to My Trips
+        },
+
+        handleProfileSubmit(e) {
+            e.preventDefault();
+            if (!this.state.currentUser) return;
+
+            this.state.currentUser.name = this.dom.profileNombre.value;
+            this.state.currentUser.age = parseInt(this.dom.profileEdad.value);
+            this.state.currentUser.whatsapp = this.dom.profileWhatsapp.value;
+            this.state.currentUser.isNew = false; // Mark as not new after completing profile
+
+            // Simulate sending to backend
+            this.showFeedbackModal('Perfil actualizado con éxito.');
+            this.updateUIForAuthState(); // Update header name
         },
         
-        renderMyTrips() {
-            if (this.mockData.myTrips.length === 0) {
-                this.dom.myTripsContent.innerHTML = '<p class="text-center text-gray-500">No tienes solicitudes de viaje activas.</p>';
-                return;
+        // MODAL CONTENT AND LOGIC
+        showTripDetailModal(trip) {
+            const modalHTML = `
+                <div class="modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 scale-95 transition-all duration-300">
+                    <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50"></div>
+                    <div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col relative">
+                        <div class="p-6 border-b flex justify-between items-start">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900">${trip.origin} → ${trip.dest}</h2>
+                                <p class="text-gray-600 mt-1">Conducido por <span class="font-semibold">${trip.driver}</span> <span class="text-yellow-500">⭐ ${trip.rating}</span></p>
+                            </div>
+                            <button class="close-modal text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+                        </div>
+                        <div class="flex-grow overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <div class="space-y-4">
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <p class="font-semibold text-gray-800">Fecha y Hora</p>
+                                        <p class="text-gray-600">${new Date(trip.date + 'T00:00:00').toLocaleDateString('es-AR', { dateStyle: 'full' })} - ${trip.time} hs</p>
+                                    </div>
+                                    <div class="bg-green-50 p-4 rounded-lg">
+                                        <p class="font-semibold text-gray-800">Precio por Pasajero</p>
+                                        <p class="text-2xl font-bold text-green-700">$${trip.price.toLocaleString('es-AR')}</p>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800 mb-2">Detalles del Viaje</h3>
+                                        <ul class="space-y-1 text-gray-700 list-disc list-inside">
+                                            <li><strong>Asientos disponibles:</strong> ${trip.seats}</li>
+                                            <li><strong>Equipaje permitido:</strong> ${trip.luggage}</li>
+                                            <li><strong>Vehículo:</strong> ${trip.vehicle}</li>
+                                            <li><strong>Fumadores:</strong> ${trip.smoking ? 'Permitido' : 'No permitido'}</li>
+                                            <li><strong>Mascotas:</strong> ${trip.pets ? 'Permitidas' : 'No permitidas'}</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800 mb-2">Notas del Conductor</h3>
+                                        <p class="text-gray-700 bg-gray-50 p-4 rounded-lg italic">"${trip.notes}"</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="map-container" class="bg-gray-200 rounded-lg min-h-[300px] lg:min-h-full"></div>
+                        </div>
+                         <div class="px-6 py-4 bg-gray-50 border-t flex flex-col sm:flex-row gap-2">
+                            <button id="whatsapp-btn" class="btn btn-primary w-full sm:w-auto flex-grow px-6 py-3 rounded-md font-semibold">Contactar por WhatsApp</button>
+                            <button id="request-join-btn" class="btn btn-secondary w-full sm:w-auto px-6 py-3 rounded-md font-semibold">Solicitar Unirme</button>
+                        </div>
+                    </div>
+                </div>`;
+            this.renderModal(modalHTML);
+            this.initMap(trip);
+
+            document.getElementById('whatsapp-btn').addEventListener('click', () => {
+                // Simulate WhatsApp redirect
+                this.showFeedbackModal(`Redirigiendo a WhatsApp para contactar a ${trip.driver}...`);
+                // window.open(`https://wa.me/${trip.driverWhatsappNumber}`, '_blank'); // Uncomment for real WhatsApp
+            });
+
+            document.getElementById('request-join-btn').addEventListener('click', () => {
+                if (!this.state.isLoggedIn) {
+                    this.showFeedbackModal('Debes iniciar sesión para solicitar unirte a un viaje.');
+                    return;
+                }
+                // Simulate sending request to backend
+                const existingRequest = this.mockData.myTrips.find(t => t.tripId === trip.id && t.as === 'passenger');
+                if (existingRequest) {
+                    this.showFeedbackModal('Ya has solicitado unirte a este viaje.');
+                    return;
+                }
+                this.mockData.myTrips.push({ tripId: trip.id, status: 'requested', as: 'passenger' });
+                // Simulate notification to driver
+                const driverOffer = this.mockData.myOffers.find(offer => offer.id === trip.id);
+                if (driverOffer) {
+                    driverOffer.requests.push({ passengerName: this.state.currentUser.name, rating: this.state.currentUser.rating, status: 'pending', requestedTripId: trip.id });
+                }
+                this.showFeedbackModal('¡Solicitud enviada! El conductor revisará tu pedido. Puedes ver el estado en "Mis Viajes".');
+                this.closeModal();
+                this.renderMyTrips(); // Refresh My Trips section
+            });
+        },
+
+        showFeedbackModal(message) {
+             const modalHTML = `
+                <div class="modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 scale-95 transition-all duration-300">
+                    <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50"></div>
+                    <div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-sm text-center p-8 relative">
+                         <h3 class="text-lg font-medium text-gray-900 mb-4">${message}</h3>
+                         <button class="close-modal btn btn-primary px-6 py-2 rounded-md">Entendido</button>
+                    </div>
+                </div>`;
+            this.renderModal(modalHTML);
+        },
+
+        showOnboardingModal() {
+            const modalHTML = `
+                <div class="modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 scale-95 transition-all duration-300">
+                    <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50"></div>
+                    <div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-md p-8 relative">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">¡Bienvenido a Viajero Consentido!</h2>
+                        <p class="text-gray-600 mb-6">Por favor, completa algunos datos para finalizar tu perfil.</p>
+                        <form id="onboarding-form" class="space-y-4">
+                            <div>
+                                <label for="onboarding-nombre" class="block text-sm font-medium text-gray-700">Nombre Completo</label>
+                                <input type="text" id="onboarding-nombre" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="${this.state.currentUser.name}">
+                            </div>
+                            <div>
+                                <label for="onboarding-edad" class="block text-sm font-medium text-gray-700">Edad</label>
+                                <input type="number" id="onboarding-edad" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Ej: 30">
+                            </div>
+                            <div>
+                                <label for="onboarding-whatsapp" class="block text-sm font-medium text-gray-700">Número de WhatsApp</label>
+                                <input type="tel" id="onboarding-whatsapp" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="+54 9 3492 123456">
+                            </div>
+                            <div class="text-right pt-4">
+                                <button type="submit" class="btn btn-primary px-6 py-2 rounded-md font-semibold">Guardar y Continuar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            this.renderModal(modalHTML);
+            document.getElementById('onboarding-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.state.currentUser.name = document.getElementById('onboarding-nombre').value;
+                this.state.currentUser.age = parseInt(document.getElementById('onboarding-edad').value);
+                this.state.currentUser.whatsapp = document.getElementById('onboarding-whatsapp').value;
+                this.state.currentUser.isNew = false; // Mark as not new
+                // Simulate sending to backend
+                this.showFeedbackModal('¡Perfil completado! Bienvenido a Viajero Consentido.');
+                this.closeModal();
+                this.updateUIForAuthState(); // Update profile name in header
+            });
+        },
+        
+        // MAP INITIALIZATION
+        initMap(trip) {
+            const mapContainer = document.getElementById('map-container');
+            if (!mapContainer) return;
+
+            // Use a timeout to ensure the modal is visible and the map container has dimensions
+            setTimeout(() => {
+                if (this.state.mapInstance) {
+                    this.state.mapInstance.remove();
+                }
+                this.state.mapInstance = L.map(mapContainer);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(this.state.mapInstance);
+
+                const polyline = trip.polyline && trip.polyline.length > 0 
+                    ? trip.polyline 
+                    : [this.getCoords(trip.origin), this.getCoords(trip.dest)]; // Fallback to straight line
+
+                const route = L.polyline(polyline, {color: '#3B82F6', weight: 5}).addTo(this.state.mapInstance);
+                this.state.mapInstance.fitBounds(route.getBounds().pad(0.1));
+
+                L.marker(polyline[0]).addTo(this.state.mapInstance).bindPopup(`<b>Origen:</b> ${trip.origin}`);
+                L.marker(polyline[polyline.length - 1]).addTo(this.state.mapInstance).bindPopup(`<b>Destino:</b> ${trip.dest}`);
+            }, 100);
+        },
+        
+        // Helper to get mock coordinates
+        getCoords(city) {
+            const coords = {
+                'Santa Fe': [-31.61067, -60.69729],
+                'Rafaela': [-31.2442, -61.4916],
+                'Rosario': [-32.9477, -60.6305],
+                'Paraná': [-31.7431, -60.5134],
+                'Sunchales': [-30.9453, -61.5623],
+                'Córdoba': [-31.4201, -64.1888]
+            };
+            return coords[city] || [0, 0];
+        },
+
+        // FILTER MANAGEMENT
+        saveCurrentFilter() {
+            const filterName = prompt("Ingresa un nombre para este filtro (máx. 50 caracteres):");
+            if (!filterName || filterName.trim() === '') return;
+            
+            const formData = new FormData(this.dom.searchForm);
+            const filterData = {
+                origin: formData.get('origin'),
+                destination: formData.get('destination'),
+                dateFrom: formData.get('date-from'),
+                dateTo: formData.get('date-to'),
+            };
+            
+            this.mockData.savedFilters[filterName] = filterData;
+            localStorage.setItem('viajeroConsentidoFilters', JSON.stringify(this.mockData.savedFilters));
+            this.loadFilters();
+            this.showFeedbackModal(`Filtro "${filterName}" guardado con éxito.`);
+        },
+
+        loadFilters() {
+            const storedFilters = localStorage.getItem('viajeroConsentidoFilters');
+            if (storedFilters) {
+                this.mockData.savedFilters = JSON.parse(storedFilters);
             }
             
-            this.dom.myTripsContent.innerHTML = '';
-            this.mockData.myTrips.forEach(trip => {
-                const tripCard = document.createElement('div');
-                tripCard.className = 'bg-white p-5 rounded-lg shadow-md flex items-center justify-between';
-                
-                let statusHTML = '';
-                let actionsHTML = '';
-                
-                switch(trip.status) {
-                    case 'solicitado':
-                        statusHTML = '<span class="text-sm font-medium bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">Solicitud Enviada</span>';
-                        actionsHTML = '<button class="btn-secondary text-sm px-3 py-1 rounded-md">Cancelar Solicitud</button>';
-                        break;
-                    case 'aprobado':
-                        statusHTML = '<span class="text-sm font-medium bg-green-100 text-green-800 px-3 py-1 rounded-full">Viaje Confirmado</span>';
-                        actionsHTML = '<a href="#" class="text-blue-600 hover:underline text-sm font-semibold">Ver Detalles</a>';
-                        break;
+            this.dom.savedFiltersSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
+            for (const name in this.mockData.savedFilters) {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                this.dom.savedFiltersSelect.appendChild(option);
+            }
+        },
+
+        applySavedFilter(filterName) {
+            if (!filterName) return;
+            const filter = this.mockData.savedFilters[filterName];
+            document.getElementById('origin').value = filter.origin || '';
+            document.getElementById('destination').value = filter.destination || '';
+            document.getElementById('date-from').value = filter.dateFrom || '';
+            document.getElementById('date-to').value = filter.dateTo || '';
+        },
+
+        // PRICE CALCULATION FOR OFFER A RIDE
+        calculatePrice() {
+            const origen = this.dom.offerOrigen.value;
+            const destino = this.dom.offerDestino.value;
+            const asientos = parseInt(this.dom.offerAsientos.value);
+            const adjustment = parseInt(this.dom.priceAdjustment.value);
+            
+            this.dom.adjustmentValue.textContent = adjustment;
+
+            if (!origen || !destino || !this.getCoords(origen) || !this.getCoords(destino)) {
+                this.dom.priceSugerido.textContent = '$0.00';
+                this.dom.precioFinalPasajero.textContent = '$0.00';
+                this.dom.priceInfo.textContent = 'Ingresa origen y destino válidos para calcular.';
+                return;
+            }
+
+            // Mock distance calculation (replace with backend call to OSRM/Google Maps)
+            const originCoords = this.getCoords(origen);
+            const destCoords = this.getCoords(destino);
+            const distance = Math.floor(L.latLng(originCoords[0], originCoords[1]).distanceTo(L.latLng(destCoords[0], destCoords[1])) / 1000); // Distance in km
+
+            const costPerKm = 50; // Mock value
+            const basePrice = distance * costPerKm;
+
+            this.dom.priceInfo.textContent = `Basado en una distancia estimada de ${distance} km.`;
+            this.dom.priceSugerido.textContent = `$${basePrice.toLocaleString('es-AR', { minimumFractionDigits: 0 })}`;
+            
+            const finalPriceTotal = basePrice * (1 + adjustment / 100);
+            const pricePerPassenger = finalPriceTotal / asientos;
+            
+            this.dom.precioFinalPasajero.textContent = `$${pricePerPassenger.toLocaleString('es-AR', { minimumFractionDigits: 0 })}`;
+        },
+
+        // MY TRIPS SECTION RENDERING
+        renderMyTrips() {
+            const myOffers = this.mockData.myOffers;
+            const myRequests = this.mockData.myTrips; // Passenger requests/confirmations
+
+            // Render driver's offers
+            this.dom.myOffersList.innerHTML = '';
+            if (myOffers.length === 0) {
+                this.dom.myOffersList.innerHTML = '<p class="text-center text-gray-500">No has publicado ningún viaje aún.</p>';
+            } else {
+                myOffers.forEach(offer => {
+                    const offerCard = document.createElement('div');
+                    offerCard.className = 'bg-white p-5 rounded-lg shadow-md';
+                    offerCard.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-bold text-lg">${offer.origin} → ${offer.dest}</h3>
+                            <span class="text-sm font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">Asientos: ${offer.availableSeats}/${offer.seats}</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">Fecha: ${offer.date} - Hora: ${offer.time} hs</p>
+                        <h4 class="font-semibold text-gray-700 mb-2">Solicitudes Pendientes:</h4>
+                        <div class="space-y-2" id="requests-for-offer-${offer.id}">
+                            ${offer.requests.length === 0 ? '<p class="text-sm text-gray-500">No hay solicitudes pendientes para este viaje.</p>' : ''}
+                        </div>
+                    `;
+                    this.dom.myOffersList.appendChild(offerCard);
+
+                    const requestsContainer = offerCard.querySelector(`#requests-for-offer-${offer.id}`);
+                    offer.requests.forEach(request => {
+                        const requestItem = document.createElement('div');
+                        requestItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md';
+                        requestItem.innerHTML = `
+                            <div>
+                                <p class="text-sm font-medium">${request.passengerName} <span class="text-yellow-500">⭐ ${request.rating}</span></p>
+                                <p class="text-xs text-gray-500">Solicitó unirse.</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button data-offer-id="${offer.id}" data-passenger-name="${request.passengerName}" class="btn btn-primary text-xs px-3 py-1 rounded-md accept-request-btn">Aceptar</button>
+                                <button data-offer-id="${offer.id}" data-passenger-name="${request.passengerName}" class="btn btn-secondary text-xs px-3 py-1 rounded-md deny-request-btn">Denegar</button>
+                            </div>
+                        `;
+                        requestsContainer.appendChild(requestItem);
+                    });
+                });
+
+                // Add event listeners for accept/deny buttons
+                this.dom.myOffersList.querySelectorAll('.accept-request-btn').forEach(button => {
+                    button.addEventListener('click', (e) => this.handleAcceptRequest(e.target.dataset.offerId, e.target.dataset.passengerName));
+                });
+                this.dom.myOffersList.querySelectorAll('.deny-request-btn').forEach(button => {
+                    button.addEventListener('click', (e) => this.handleDenyRequest(e.target.dataset.offerId, e.target.dataset.passengerName));
+                });
+            }
+
+            // Render passenger's requests/confirmations
+            this.dom.myRequestsList.innerHTML = '';
+            if (myRequests.length === 0) {
+                this.dom.myRequestsList.innerHTML = '<p class="text-center text-gray-500">No tienes solicitudes de viaje activas como pasajero.</p>';
+            } else {
+                myRequests.forEach(request => {
+                    const trip = this.mockData.trips.find(t => t.id === request.tripId);
+                    if (!trip) return; // Should not happen with consistent data
+
+                    const requestCard = document.createElement('div');
+                    requestCard.className = 'bg-white p-5 rounded-lg shadow-md flex items-center justify-between';
+                    let statusHTML = '';
+                    let actionsHTML = '';
+
+                    switch(request.status) {
+                        case 'requested':
+                            statusHTML = '<span class="text-sm font-medium bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">Solicitud Enviada</span>';
+                            actionsHTML = `<button data-trip-id="${request.tripId}" class="btn btn-secondary text-xs px-3 py-1 rounded-md cancel-passenger-request-btn">Cancelar Solicitud</button>`;
+                            break;
+                        case 'confirmed':
+                            statusHTML = '<span class="text-sm font-medium bg-green-100 text-green-800 px-3 py-1 rounded-full">Viaje Confirmado</span>';
+                            actionsHTML = `<button data-trip-id="${request.tripId}" class="btn btn-primary text-xs px-3 py-1 rounded-md view-confirmed-trip-btn">Ver Detalles</button>`;
+                            break;
+                        case 'denied':
+                            statusHTML = '<span class="text-sm font-medium bg-red-100 text-red-800 px-3 py-1 rounded-full">Solicitud Denegada</span>';
+                            actionsHTML = ''; // No actions for denied
+                            break;
+                    }
+                    
+                    requestCard.innerHTML = `
+                        <div>
+                            <h3 class="font-bold">${trip.origin} → ${trip.dest}</h3>
+                            <p class="text-sm text-gray-500">Conductor: ${trip.driver} - ${trip.date}</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            ${statusHTML}
+                            ${actionsHTML}
+                        </div>
+                    `;
+                    this.dom.myRequestsList.appendChild(requestCard);
+                });
+
+                this.dom.myRequestsList.querySelectorAll('.cancel-passenger-request-btn').forEach(button => {
+                    button.addEventListener('click', (e) => this.handleCancelPassengerRequest(e.target.dataset.tripId));
+                });
+                this.dom.myRequestsList.querySelectorAll('.view-confirmed-trip-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const tripId = parseInt(e.target.dataset.tripId);
+                        const trip = this.mockData.trips.find(t => t.id === tripId);
+                        if (trip) this.showTripDetailModal(trip);
+                    });
+                });
+            }
+        },
+
+        handleAcceptRequest(offerId, passengerName) {
+            const offer = this.mockData.myOffers.find(o => o.id === parseInt(offerId));
+            if (offer) {
+                const requestIndex = offer.requests.findIndex(req => req.passengerName === passengerName);
+                if (requestIndex !== -1) {
+                    offer.requests.splice(requestIndex, 1); // Remove from pending requests
+                    offer.availableSeats--; // Decrease available seats
+
+                    // Update passenger's trip status
+                    const passengerTrip = this.mockData.myTrips.find(t => t.tripId === offer.id && t.as === 'passenger');
+                    if (passengerTrip) {
+                        passengerTrip.status = 'confirmed';
+                    }
+                    this.showFeedbackModal(`Solicitud de ${passengerName} aceptada. Asientos actualizados.`);
+                    this.renderMyTrips(); // Re-render my trips
                 }
-                
-                tripCard.innerHTML = `
-                    <div>
-                        <h3 class="font-bold">${trip.origin} → ${trip.destination}</h3>
-                        <p class="text-sm text-gray-500">Conductor: ${trip.driver} - ${trip.date}</p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        ${statusHTML}
-                        ${actionsHTML}
-                    </div>
-                `;
-                this.dom.myTripsContent.appendChild(tripCard);
-            });
+            }
+        },
+
+        handleDenyRequest(offerId, passengerName) {
+            const offer = this.mockData.myOffers.find(o => o.id === parseInt(offerId));
+            if (offer) {
+                const requestIndex = offer.requests.findIndex(req => req.passengerName === passengerName);
+                if (requestIndex !== -1) {
+                    offer.requests.splice(requestIndex, 1); // Remove from pending requests
+                    // Update passenger's trip status
+                    const passengerTrip = this.mockData.myTrips.find(t => t.tripId === offer.id && t.as === 'passenger');
+                    if (passengerTrip) {
+                        passengerTrip.status = 'denied';
+                    }
+                    this.showFeedbackModal(`Solicitud de ${passengerName} denegada.`);
+                    this.renderMyTrips(); // Re-render my trips
+                }
+            }
+        },
+
+        handleCancelPassengerRequest(tripId) {
+            const requestIndex = this.mockData.myTrips.findIndex(t => t.tripId === parseInt(tripId) && t.as === 'passenger');
+            if (requestIndex !== -1) {
+                this.mockData.myTrips.splice(requestIndex, 1);
+                // Simulate notifying driver if request was pending
+                const driverOffer = this.mockData.myOffers.find(offer => offer.id === parseInt(tripId));
+                if (driverOffer) {
+                    const pendingRequestIndex = driverOffer.requests.findIndex(req => req.requestedTripId === parseInt(tripId) && req.passengerName === this.state.currentUser.name);
+                    if (pendingRequestIndex !== -1) {
+                        driverOffer.requests.splice(pendingRequestIndex, 1);
+                    }
+                }
+                this.showFeedbackModal('Solicitud de viaje cancelada.');
+                this.renderMyTrips();
+            }
+        },
+
+        // MY PROFILE SECTION LOGIC
+        loadProfileData() {
+            if (this.state.currentUser) {
+                this.dom.profileNombre.value = this.state.currentUser.name || '';
+                this.dom.profileEdad.value = this.state.currentUser.age || '';
+                this.dom.profileWhatsapp.value = this.state.currentUser.whatsapp || '';
+                this.dom.profileName.textContent = this.state.currentUser.name;
+                this.dom.profileRating.textContent = `${this.state.currentUser.rating} ⭐ (${this.state.currentUser.trips} viajes)`;
+            }
+        },
+
+        // MOCK POLYLINE FOR NEW TRIPS
+        getMockPolyline(origin, dest) {
+            const originCoords = this.getCoords(origin);
+            const destCoords = this.getCoords(dest);
+            if (originCoords[0] === 0 && originCoords[1] === 0 || destCoords[0] === 0 && destCoords[1] === 0) {
+                return []; // Return empty if coords not found for a straight line fallback
+            }
+            // Simple straight line for mock
+            return [originCoords, destCoords];
         }
+
     };
 
     app.init();
