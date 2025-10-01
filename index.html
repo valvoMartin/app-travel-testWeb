@@ -32,6 +32,15 @@
                 height: 350px;
             }
         }
+        /* Estilos específicos para la etiqueta de estado */
+        .status-tag {
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 600; /* font-semibold */
+            padding: 0.25rem 0.5rem; /* px-2 py-1 */
+            border-radius: 0.375rem; /* rounded-md */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -53,12 +62,12 @@
                     <p id="critical-tasks" class="text-4xl font-bold text-red-600 mt-2">0</p>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col items-center justify-center">
-                    <h2 class="text-lg font-semibold text-gray-500">En Desarrollo</h2>
-                    <p id="developing-tasks" class="text-4xl font-bold text-yellow-500 mt-2">0</p>
+                    <h2 class="text-lg font-semibold text-gray-500">En Producción</h2>
+                    <p id="developing-tasks" class="text-4xl font-bold text-green-600 mt-2">0</p>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col items-center justify-center">
-                    <h2 class="text-lg font-semibold text-gray-500">Pendientes</h2>
-                    <p id="pending-tasks" class="text-4xl font-bold text-gray-600 mt-2">0</p>
+                    <h2 class="text-lg font-semibold text-gray-500">Dudas/Pendientes</h2>
+                    <p id="pending-tasks" class="text-4xl font-bold text-purple-600 mt-2">0</p>
                 </div>
             </section>
 
@@ -95,44 +104,81 @@
                         <label for="status-filter" class="block text-sm font-medium text-gray-700">Filtrar por Estado</label>
                         <select id="status-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                             <option value="all">Todos</option>
-                            <option value="Por Hacer">Por Hacer</option>
+                            <option value="Warning">Warning</option>
                             <option value="En Desarrollo">En Desarrollo</option>
+                            <option value="En Producción">En Producción</option>
                             <option value="Pendiente">Pendiente</option>
+                            <option value="Duda">Duda</option>
                         </select>
                     </div>
                 </div>
                 <div id="task-list" class="space-y-4">
                 </div>
+                
+                <!-- Contenedor para el mensaje Toast/Alerta -->
+                <div id="toast-message" class="fixed bottom-4 right-4 z-50 transition-opacity duration-300 opacity-0 pointer-events-none">
+                    <div class="bg-green-600 text-white p-4 rounded-lg shadow-xl flex items-center">
+                        <span class="mr-2 text-xl">&#10003;</span>
+                        <span id="toast-text"></span>
+                    </div>
+                </div>
+                
             </section>
         </main>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Actualización de estados según las instrucciones del usuario
             const tasks = [
-                { id: 'C&P (Global)', title: 'Perfil Wizard no finaliza', detail: 'El wizard del perfil nunca termina de ejecutar bien el último paso, volviendo a mostrarse al entrar, impidiendo el uso a nuevos usuarios. Además, vuelve a pedir el email.', priority: 'CRÍTICA', status: 'Por Hacer', type: 'Bug' },
-                { id: 'E3 (Bug)', title: 'Cargar viajes falla (Error 500)', detail: 'La funcionalidad de cargar viajes está fallando con un error 500.', priority: 'CRÍTICA', status: 'Por Hacer', type: 'Bug' },
-                { id: 'C&P (E2)', title: 'Admin: Gestión de Usuarios', detail: 'La sección de administración de usuarios para los admins no permite crear, modificar y eliminar usuarios (necesario para moderar y suspender/eliminar bots).', priority: 'ALTA', status: 'Por Hacer', type: 'Mejora' },
-                { id: 'E3 (Missing)', title: 'Falta Alta de Conductor', detail: 'No se encuentra la feature de poder darse de alta como conductor, incluyendo la subida de una imagen requerida (DNI, foto auto, etc.).', priority: 'ALTA', status: 'Por Hacer', type: 'Feature' },
-                { id: 'E3 (Bug)', title: 'Filtros de Viajes no funcionan', detail: 'Los filtros no funcionan en la lista de viajes; siempre se muestran los mismos viajes.', priority: 'ALTA', status: 'Por Hacer', type: 'Bug' },
-                { id: 'E3 (Bug)', title: 'Detalle de Viajes Hardcodeado', detail: 'Al clickear los viajes, todos abren la misma ventana de detalles hardcodeados.', priority: 'ALTA', status: 'Por Hacer', type: 'Bug' },
-                { id: 'E4 (Feature)', title: 'Flujo completo de solicitar unirse a un viaje', detail: 'Implementar el flujo de solicitud, aceptación y rechazo.', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
-                { id: 'E4 (Feature)', title: 'Notificaciones de solicitud y aceptación/rechazo por mail', detail: 'Implementar las notificaciones por correo electrónico.', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
-                { id: 'E4 (Feature)', title: 'Flujo de marcar un viaje como finalizado', detail: 'Implementar la funcionalidad de finalización del viaje.', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
-                { id: 'C&P (E3)', title: 'Botón \'Mis Viajes\' no funciona', detail: 'Hay un segundo botón en la sección "Mis Viajes" para publicar viajes que no funciona.', priority: 'MEDIA', status: 'Por Hacer', type: 'Bug' },
-                { id: 'E4 (Feature)', title: 'Foto de Viaje Editable', detail: 'Foto guardada por viaje, tomando por default la del auto del usuario, pero pudiendo subir otra.', priority: 'MEDIA', status: 'En Desarrollo', type: 'Feature' },
-                { id: 'Comentario', title: 'Redirect de Social Login', detail: 'Al loguearse con redes sociales, el redirect no lleva a la página que uno estaba intentando acceder (el bug no ocurre con mail/password).', priority: 'MEDIA', status: 'Por Hacer', type: 'Mejora' },
-                { id: 'E3 (Feature)', title: 'Poder cargar viajes', detail: 'Carga de viajes (asumiendo que el error 500 es el único pendiente).', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
-                { id: 'E3 (Feature)', title: 'Poder listar viajes con al menos 3 filtros', detail: 'Listado de viajes con filtros.', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
-                { id: 'E3 (Feature)', title: 'Ver detalle de cada viaje', detail: 'Desde la lista, poder entrar a ver el detalle de cada viaje.', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
-                { id: 'E5 (Pendiente)', title: 'Búsqueda de Texto Completo', detail: 'El sitio debe permitir búsqueda de texto completo sobre el contenido del sitio (ej: buscar por descripción o comentarios).', priority: 'BAJA', status: 'Pendiente', type: 'Idea' },
-                { id: 'E5 (Idea 1)', title: 'Sistema de Rating y Reseñas', detail: 'Los conductores y pasajeros pueden calificarse mutuamente al finalizar un viaje.', priority: 'BAJA', status: 'Pendiente', type: 'Idea' },
-                { id: 'E5 (Idea 2)', title: 'Historial de Viajes Detallado', detail: 'Sección para que cada usuario pueda ver un historial completo de sus viajes realizados y pendientes.', priority: 'BAJA', status: 'Pendiente', type: 'Idea' },
+                // Tareas con nuevo estado Duda
+                { id: 'C&P (Global)', title: 'Perfil Wizard no finaliza', detail: 'El wizard del perfil nunca termina de ejecutar bien el último paso... CREERIA QUE ETSA SOLUCIONADO, EN VERDAD NUNCA ME PASO A MI ', priority: 'CRÍTICA', status: 'Duda', type: 'Bug' },
+                { id: 'Comentario', title: 'Redirect de Social Login', detail: 'Al loguearse con redes sociales, el redirect no lleva a la página que... EN VERDAD NUNCA ME PASO A MI, ME GUSTARIA QUE VUELVAN A INTENTARLO.', priority: 'MEDIA', status: 'Duda', type: 'Mejora' },
+                
+                // Tareas con nuevo estado Warning
+                { id: 'E4 (Feature)', title: 'Notificaciones de solicitud y aceptación/rechazo por mail', detail: 'Implementar las notificaciones por correo electrónico... ES LA NOVEDAD POR MEDIO DE UN POPUP CUANDO EL USER INGRESA AL SITIO', priority: 'ALTA', status: 'Warning', type: 'Feature' },
+                { id: 'E5 (Pendiente)', title: 'Búsqueda de Texto Completo', detail: 'El sitio debe permitir búsqueda de texto completo sobre el contenido del sitio... AIUDAAA, ME FALTAN IDEAS PARA SABER DONDE PODRIA DAR USO DE ESTA FEATURE EN ESTA APP.', priority: 'BAJA', status: 'Warning', type: 'Idea' },
+                
+                // Tareas con nuevo estado En Desarrollo
+                { id: 'E4 (Feature)', title: 'Foto de Viaje Editable', detail: 'Foto guardada por viaje, tomando por default la del auto del usuario, pero pudiendo subir otra... FALTA IMPLEMENTAR', priority: 'MEDIA', status: 'En Desarrollo', type: 'Feature' },
+
+                // Tareas con nuevo estado Pendiente
+                { id: 'E3 (Bug)', title: 'Detalle de Viajes Hardcodeado', detail: 'Al clickear los viajes, todos abren la misma ventana de detalles hardcodeados... SOLO ALGUNOS XD', priority: 'ALTA', status: 'Pendiente', type: 'Bug' },
+                { id: 'C&P (E2)', title: 'Admin: Gestión de Usuarios', detail: 'La sección de administración de usuarios para los admins... NOSOTROS TENEMOS ESTA VISIBILIDAD POR MEDIO DEL SERVIICIO DE CLERK (Que tan prioritario es esta feature?) SE DEJO BASTANTE DE LADO ESTA FEAT DADO QUE TENEMOS ESA FUNCIONALIDAD DESDE EL DASH DE CLERK Y SE ESTAN PRIORIZANDO OTRAS FEATURES', priority: 'ALTA', status: 'Pendiente', type: 'Mejora' },
+                
+                // Tareas con nuevo estado En Producción (Listo)
+                { id: 'E3 (Bug)', title: 'Cargar viajes falla (Error 500)', detail: 'La funcionalidad de cargar viajes está fallando con un error 500.', priority: 'CRÍTICA', status: 'En Producción', type: 'Bug' },
+                { id: 'E3 (Bug)', title: 'Filtros de Viajes no funcionan', detail: 'Los filtros no funcionan en la lista de viajes; siempre se muestran los mismos viajes.', priority: 'ALTA', status: 'En Producción', type: 'Bug' },
+                { id: 'E3 (Feature)', title: 'Ver detalle de cada viaje', detail: 'Desde la lista, poder entrar a ver el detalle de cada viaje.', priority: 'ALTA', status: 'En Producción', type: 'Feature' },
+                { id: 'E4 (Feature)', title: 'Flujo completo de solicitar unirse a un viaje', detail: 'Implementar el flujo de solicitud, aceptación y rechazo.', priority: 'ALTA', status: 'En Producción', type: 'Feature' },
+                { id: 'E4 (Feature)', title: 'Flujo de marcar un viaje como finalizado', detail: 'Implementar la funcionalidad de finalización del viaje.', priority: 'ALTA', status: 'En Producción', type: 'Feature' },
+                { id: 'E3 (Missing)', title: 'Falta Alta de Conductor', detail: 'No se encuentra la feature de poder darse de alta como conductor, incluyendo la subida de una imagen requerida (DNI, foto auto, etc.).', priority: 'ALTA', status: 'En Producción', type: 'Feature' },
+                { id: 'E3 (Feature)', title: 'Poder cargar viajes', detail: 'Carga de viajes (asumiendo que el error 500 es el único pendiente).', priority: 'ALTA', status: 'En Producción', type: 'Feature' },
+                { id: 'E3 (Feature)', title: 'Poder listar viajes con al menos 3 filtros', detail: 'Listado de viajes con filtros.', priority: 'ALTA', status: 'En Producción', type: 'Feature' },
+                { id: 'C&P (E3)', title: 'Botón \'Mis Viajes\' no funciona', detail: 'Hay un segundo botón en la sección "Mis Viajes" para publicar viajes que no funciona.', priority: 'MEDIA', status: 'En Producción', type: 'Bug' },
+                { id: 'E5 (Idea 1)', title: 'Sistema de Rating y Reseñas', detail: 'Los conductores y pasajeros pueden calificarse mutuamente al finalizar un viaje.', priority: 'BAJA', status: 'En Producción', type: 'Idea' },
             ];
+
+            // Mapeo para las etiquetas de estado: texto y estilos
+            const statusTagMap = {
+                // Nuevo estado de Warning
+                'Warning': { text: 'Warning', bg: 'bg-red-500', text_color: 'text-white' }, 
+                // Nuevo estado de Producción
+                'En Producción': { text: 'En Producción', bg: 'bg-green-500', text_color: 'text-white' },
+                // Nuevo estado de Desarrollo
+                'En Desarrollo': { text: 'En Desarrollo', bg: 'bg-yellow-500', text_color: 'text-gray-800' },
+                // Nuevo estado de Duda
+                'Duda': { text: 'Duda', bg: 'bg-purple-500', text_color: 'text-white' }, 
+                // Estado General Pendiente
+                'Pendiente': { text: 'Pendiente', bg: 'bg-gray-400', text_color: 'text-white' } 
+            };
+
 
             const priorityFilter = document.getElementById('priority-filter');
             const statusFilter = document.getElementById('status-filter');
             const taskListContainer = document.getElementById('task-list');
+            const toastElement = document.getElementById('toast-message');
+            const toastText = document.getElementById('toast-text');
 
             const priorityColors = {
                 'CRÍTICA': { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-500' },
@@ -227,37 +273,101 @@
                 }
             });
 
+            // Función para copiar texto al portapapeles usando el método recomendado.
+            function copyTextToClipboard(text) {
+                let success = false;
+                // Crea un elemento input temporal y oculto
+                const tempInput = document.createElement('input');
+                tempInput.style.position = 'fixed';
+                tempInput.style.opacity = '0';
+                tempInput.value = text;
+                document.body.appendChild(tempInput);
+
+                // Selecciona el contenido del input
+                tempInput.select();
+                tempInput.setSelectionRange(0, 99999); // Para dispositivos móviles
+
+                try {
+                    // Ejecuta el comando de copiado
+                    success = document.execCommand('copy');
+                } catch (err) {
+                    console.error('Error al intentar copiar al portapapeles:', err);
+                }
+
+                // Remueve el elemento temporal
+                document.body.removeChild(tempInput);
+                
+                return success;
+            }
+
+            // Función para mostrar el mensaje temporal (Toast)
+            function showToast(message, linkUrl) {
+                toastText.textContent = message;
+                toastElement.classList.remove('opacity-0', 'pointer-events-none');
+                toastElement.classList.add('opacity-100');
+
+                // Redirigir después de 3 segundos
+                setTimeout(() => {
+                    toastElement.classList.remove('opacity-100');
+                    toastElement.classList.add('opacity-0', 'pointer-events-none');
+                    // Abre el Google Sheet en una nueva pestaña (que ejecutará el Apps Script para filtrar)
+                    window.open(linkUrl, '_blank');
+                }, 3000);
+            }
+
+            // Manejador del clic: COPIA el ID, muestra el toast y redirige
+            function handleNotesClick(taskId, linkUrl) {
+                const isCopied = copyTextToClipboard(taskId);
+                let message = `Filtro aplicado para la Tarea: ${taskId}. `;
+
+                if (isCopied) {
+                    message += `El ID se ha copiado automáticamente al portapapeles. ¡Solo presiona CTRL+V en la fila de tu hoja! Redirigiendo en 3 segundos.`;
+                } else {
+                    // Mensaje de respaldo si el copiado falla (poco común)
+                    message += `El ID NO pudo ser copiado automáticamente. Por favor, cópielo manualmente. Redirigiendo en 3 segundos.`;
+                }
+
+                showToast(message, linkUrl);
+            }
+
             function renderTasks(filteredTasks) {
                 taskListContainer.innerHTML = '';
                 if(filteredTasks.length === 0) {
                     taskListContainer.innerHTML = `<p class="text-center text-gray-500 py-4">No se encontraron tareas con los filtros seleccionados.</p>`;
                 }
 
-                // URL base para Google Sheets (URL REAL proporcionada por el usuario)
-                // Se utiliza el parámetro 'task_id' para identificar la tarea en la hoja de cálculo.
-                const sheetsBaseUrl = "https://docs.google.com/spreadsheets/d/1TFVvaPfWvEqFdhTG0BZEaQ_n0ZMYuYY5rrxTWgEU_Rg/edit?gid=0#gid=0";
+                // URL base de tu Web App de Google Script.
+                // RECUERDA: DEBES reemplazar 'TU_ID_DE_WEB_APP/exec' con la URL real de tu Google Apps Script desplegado.
+                const sheetsBaseUrl = "https://docs.google.com/spreadsheets/d/1TFVvaPfWvEqFdhTG0BZEaQ_n0ZMYuYY5rrxTWgEU_Rg/edit?gid=1873176573#gid=1873176573";
                 
                 filteredTasks.forEach(task => {
                     const colors = priorityColors[task.priority] || priorityColors['PENDIENTE'];
                     
-                    // Construir el link con el ID de la tarea
-                    const noteLinkUrl = `${sheetsBaseUrl}&task_id=${encodeURIComponent(task.id)}`;
+                    // Obtener la configuración de la etiqueta de estado
+                    const statusTagConfig = statusTagMap[task.status] || { text: 'Desconocido', bg: 'bg-gray-200', text_color: 'text-gray-800' };
+
+                    // Construir el link, enviando el task_id como parámetro al script
+                    const noteLinkUrl = `${sheetsBaseUrl}?task_id=${encodeURIComponent(task.id)}`;
 
                     const taskElement = `
                         <div class="border-l-4 ${colors.border} ${colors.bg} p-4 rounded-r-lg shadow-sm">
                             <div class="flex justify-between items-start">
-                                <div>
-                                    <span class="text-sm font-semibold ${colors.text}">${task.id}</span>
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+                                    <!-- Etiqueta de Estado con Recuadro -->
+                                    <span class="status-tag ${statusTagConfig.bg} ${statusTagConfig.text_color} mb-2 sm:mb-0">
+                                        ${statusTagConfig.text}
+                                    </span>
                                     <h4 class="font-bold text-lg">${task.title}</h4>
                                 </div>
                                 <span class="px-3 py-1 text-sm font-semibold rounded-full ${colors.bg} ${colors.text}">${task.priority}</span>
                             </div>
                             <p class="mt-2 text-gray-600">${task.detail}</p>
-                            <div class="mt-3 pt-3 border-t border-gray-300 flex justify-end">
-                                <a href="${noteLinkUrl}" target="_blank" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out bg-indigo-50 px-3 py-1 rounded-md shadow-sm hover:shadow-md flex items-center">
+                            <div class="mt-3 pt-3 border-t border-gray-300 flex justify-between items-center">
+                                <span class="text-sm font-semibold text-gray-600">${task.id}</span>
+                                <button onclick="handleNotesClick('${task.id}', '${noteLinkUrl}')" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out bg-indigo-50 px-3 py-1 rounded-md shadow-sm hover:shadow-md flex items-center">
                                     <span class="mr-1">&#9998;</span>
                                     Agregar/Ver Notas
-                                </a>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -281,34 +391,39 @@
             }
 
             function updateKPIs(filteredTasks) {
-                document.getElementById('total-tasks').textContent = filteredTasks.length;
+                document.getElementById('total-tasks').textContent = tasks.length;
                 document.getElementById('critical-tasks').textContent = tasks.filter(t => t.priority === 'CRÍTICA').length;
-                document.getElementById('developing-tasks').textContent = tasks.filter(t => t.status === 'En Desarrollo').length;
-                document.getElementById('pending-tasks').textContent = tasks.filter(t => t.status === 'Pendiente').length;
+                // El KPI de 'En Producción' ahora cuenta ese estado
+                document.getElementById('developing-tasks').textContent = tasks.filter(t => t.status === 'En Producción').length;
+                // El KPI de 'Dudas/Pendientes' ahora cuenta 'Duda' y 'Pendiente'
+                document.getElementById('pending-tasks').textContent = tasks.filter(t => t.status === 'Duda' || t.status === 'Pendiente').length;
             }
 
             function updateCharts(filteredTasks) {
                 const priorityCounts = {};
-                filteredTasks.forEach(task => {
+                tasks.forEach(task => {
                     priorityCounts[task.priority] = (priorityCounts[task.priority] || 0) + 1;
                 });
                 
-                const priorityLabels = Object.keys(priorityCounts);
+                const priorityLabels = Object.keys(priorityCounts).filter(p => priorityCounts[p] > 0);
                 priorityChart.data.labels = priorityLabels;
-                priorityChart.data.datasets[0].data = Object.values(priorityCounts);
+                priorityChart.data.datasets[0].data = priorityLabels.map(label => priorityCounts[label]);
                 priorityChart.data.datasets[0].backgroundColor = priorityLabels.map(label => chartColors[label]);
                 priorityChart.update();
 
                 const typeCounts = {};
-                filteredTasks.forEach(task => {
+                tasks.forEach(task => {
                     typeCounts[task.type] = (typeCounts[task.type] || 0) + 1;
                 });
-                const typeLabels = Object.keys(typeCounts);
+                const typeLabels = Object.keys(typeCounts).filter(t => typeCounts[t] > 0);
                 typeChart.data.labels = typeLabels;
-                typeChart.data.datasets[0].data = Object.values(typeCounts);
+                typeChart.data.datasets[0].data = typeLabels.map(label => typeCounts[label]);
                 typeChart.data.datasets[0].backgroundColor = typeLabels.map(label => typeChartColors[label] || 'rgba(156, 163, 175, 0.7)');
                 typeChart.update();
             }
+
+            // Exponer la función al scope global para que los botones la puedan usar
+            window.handleNotesClick = handleNotesClick;
 
             priorityFilter.addEventListener('change', updateDashboard);
             statusFilter.addEventListener('change', updateDashboard);
