@@ -3,592 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viajero Consentido - Tu App de Viajes Compartidos</title>
+    <title>Panel de Tareas Interactivo</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Priority Accents (Red, Orange, Yellow, Blue, Gray) -->
+    <!-- Application Structure Plan: A dashboard-style SPA featuring KPIs, interactive charts, and a filterable task board. This structure was chosen to provide an immediate, high-level overview of the project's status while allowing users to drill down into specific task categories (by priority or status) for actionable insights. It transforms a static list into a dynamic project management tool. -->
+    <!-- Visualization & Content Choices: 1. KPIs (Totals): Goal=Inform, Method=HTML/CSS Cards, Interaction=Dynamic update on filter, Justification=Quick summary. 2. Priority Distribution: Goal=Compare Proportions, Method=Chart.js Donut Chart, Interaction=Filterable, Tooltips, Justification=Shows composition of workload. 3. Task Type Distribution: Goal=Compare Categories, Method=Chart.js Bar Chart, Interaction=Filterable, Tooltips, Justification=Shows where effort is focused (bugs vs features). 4. Task List: Goal=Organize/Inform, Method=Filterable HTML Cards, Interaction=Dropdown filters, Justification=Core interactive element for task management. 5. External Note Link: Goal=Collaboration, Method=Dynamic URL parameter, Interaction=Click to external sheet, Justification=Centralizes collaborative notes outside the SPA using the task ID. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #FDFBF8;
+            background-color: #f8f9fa;
         }
-        .nav-link {
-            transition: all 0.3s ease;
-            cursor: pointer;
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
         }
-        .nav-link.active {
-            color: #2563EB;
-            border-bottom: 2px solid #2563EB;
-        }
-        .nav-link:not(.active):hover {
-            color: #6B7280;
-        }
-        .form-input, .form-select {
-            transition: all 0.3s ease;
-        }
-        .btn-primary {
-            background-color: #2563EB;
-            color: white;
-            transition: background-color 0.3s ease;
-        }
-        .btn-primary:hover {
-            background-color: #1D4ED8;
-        }
-        .btn-secondary {
-            background-color: #E5E7EB;
-            color: #374151;
-            transition: background-color 0.3s ease;
-        }
-        .btn-secondary:hover {
-            background-color: #D1D5DB;
-        }
-        .card {
-            transition: all 0.3s ease;
-            border: 1px solid #E5E7EB;
-        }
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.5);
-            transition: opacity 0.3s ease;
-        }
-        .modal-content {
-            transition: all 0.3s ease;
-        }
-        .hidden-section {
-            display: none;
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
         }
     </style>
-    <!-- Chosen Palette: Warm Neutrals & Calm Blue -->
-    <!-- Application Structure Plan: Se ha diseñado una SPA con navegación por pestañas (Buscar Viaje, Ofrecer Viaje, Mis Viajes, Perfil). Esta estructura orientada a tareas es la más intuitiva para los usuarios, ya que separa claramente los dos flujos principales (buscar y ofrecer) y centraliza las gestiones personales en "Mis Viajes". La vista por defecto es "Buscar Viaje", el caso de uso más común, para una experiencia de entrada inmediata y eficiente. El flujo interactivo se gestiona con JavaScript para mostrar/ocultar secciones, manteniendo al usuario en una única página. -->
-    <!-- Visualization & Content Choices: Report Info -> Goal -> Viz/Presentation Method -> Interaction -> Justification -> Library/Method. 1. Búsqueda de Viajes -> Organizar/Encontrar -> Formulario con filtros -> El usuario completa campos y presiona "Buscar" para filtrar la lista -> UI estándar y eficiente -> HTML/JS. 2. Listado de Viajes -> Comparar/Informar -> Cuadrícula de tarjetas con info clave -> Click en tarjeta abre modal con detalles -> Permite escaneo rápido y profundización opcional -> HTML/JS. 3. Cálculo de Precio -> Informar/Empoderar -> Slider interactivo en formulario "Ofrecer Viaje" -> El conductor ajusta el precio y ve el costo por pasajero en tiempo real -> Transparencia y control para el conductor -> HTML/JS. 4. Flujo de Confirmación -> Organizar/Accionar -> Tarjetas en "Mis Viajes" con estados y botones -> Click en botones "Aceptar/Cancelar" actualiza el estado -> Centraliza acciones y notificaciones del usuario -> HTML/JS. 5. Diagrama de Flujo -> Informar -> Diagrama visual simple -> Estático -> Explica el proceso de la app de forma rápida -> HTML/CSS. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 </head>
 <body class="text-gray-800">
 
-    <div id="app">
-        <header class="bg-white shadow-sm sticky top-0 z-40">
-            <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center">
-                        <span class="font-bold text-2xl text-blue-600">Viajero Consentido</span>
-                    </div>
-                    <div class="hidden md:block">
-                        <div class="ml-10 flex items-baseline space-x-4">
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 active" data-section="buscar-viaje">Buscar Viaje</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-500" data-section="ofrecer-viaje">Ofrecer Viaje</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-500" data-section="mis-viajes">Mis Viajes</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-500" data-section="perfil">Mi Perfil</a>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <button id="authButton" class="btn-primary px-4 py-2 rounded-md text-sm font-medium">Iniciar Sesión</button>
-                    </div>
-                </div>
-            </nav>
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Panel de Control de Tareas y Correcciones</h1>
+            <p class="text-gray-600 mt-2">Un resumen interactivo del estado actual del proyecto.</p>
         </header>
 
-        <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            
-            <section id="buscar-viaje" class="app-section">
-                <div class="text-center mb-12">
-                    <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">Encuentra tu próximo viaje</h1>
-                    <p class="mt-4 text-lg leading-8 text-gray-600">Conectamos conductores con asientos libres y pasajeros que van en la misma dirección.</p>
+        <main>
+            <section id="kpis" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col items-center justify-center">
+                    <h2 class="text-lg font-semibold text-gray-500">Tareas Totales</h2>
+                    <p id="total-tasks" class="text-4xl font-bold text-blue-600 mt-2">0</p>
                 </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-md max-w-4xl mx-auto">
-                    <form id="search-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                        <div>
-                            <label for="origen" class="block text-sm font-medium text-gray-700">Origen</label>
-                            <input type="text" id="origen" name="origen" class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej: Santa Fe">
-                        </div>
-                        <div>
-                            <label for="destino" class="block text-sm font-medium text-gray-700">Destino</label>
-                            <input type="text" id="destino" name="destino" class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej: Rafaela">
-                        </div>
-                        <div>
-                            <label for="fecha" class="block text-sm font-medium text-gray-700">Fecha</label>
-                            <input type="date" id="fecha" name="fecha" class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        </div>
-                        <button type="submit" class="btn-primary w-full py-2 rounded-md font-semibold">Buscar</button>
-                    </form>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col items-center justify-center">
+                    <h2 class="text-lg font-semibold text-gray-500">Críticas</h2>
+                    <p id="critical-tasks" class="text-4xl font-bold text-red-600 mt-2">0</p>
                 </div>
-
-                <div id="trip-results" class="mt-12">
-                    <h2 class="text-2xl font-bold mb-6 text-center">Viajes Disponibles</h2>
-                    <div id="trip-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    </div>
-                    <p id="no-results" class="text-center text-gray-500 hidden mt-8">No se encontraron viajes con esos criterios. Intenta una búsqueda más amplia.</p>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col items-center justify-center">
+                    <h2 class="text-lg font-semibold text-gray-500">En Desarrollo</h2>
+                    <p id="developing-tasks" class="text-4xl font-bold text-yellow-500 mt-2">0</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col items-center justify-center">
+                    <h2 class="text-lg font-semibold text-gray-500">Pendientes</h2>
+                    <p id="pending-tasks" class="text-4xl font-bold text-gray-600 mt-2">0</p>
                 </div>
             </section>
 
-            <section id="ofrecer-viaje" class="app-section hidden-section">
-                <div class="max-w-4xl mx-auto">
-                    <div class="text-center mb-12">
-                        <h1 class="text-4xl font-bold tracking-tight text-gray-900">Ofrece tu viaje</h1>
-                        <p class="mt-4 text-lg leading-8 text-gray-600">Comparte los gastos de tu próximo viaje y ayuda a otros a llegar a su destino.</p>
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="text-xl font-bold text-center mb-4">Distribución por Prioridad</h3>
+                    <div class="chart-container">
+                        <canvas id="priorityChart"></canvas>
                     </div>
-                    <div class="bg-white p-8 rounded-xl shadow-md">
-                        <form id="offer-form" class="space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label for="offer-origen" class="block text-sm font-medium text-gray-700">Origen</label>
-                                    <input type="text" id="offer-origen" required class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Ciudad de Salida">
-                                </div>
-                                <div>
-                                    <label for="offer-destino" class="block text-sm font-medium text-gray-700">Destino</label>
-                                    <input type="text" id="offer-destino" required class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Ciudad de Llegada">
-                                </div>
-                            </div>
-                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label for="offer-fecha" class="block text-sm font-medium text-gray-700">Fecha de Salida</label>
-                                    <input type="date" id="offer-fecha" required class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                </div>
-                                <div>
-                                    <label for="offer-hora" class="block text-sm font-medium text-gray-700">Hora de Salida</label>
-                                    <input type="time" id="offer-hora" required class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label for="offer-asientos" class="block text-sm font-medium text-gray-700">Asientos Disponibles</label>
-                                    <select id="offer-asientos" required class="form-select mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                        <option>1</option>
-                                        <option>2</option>
-                                        <option>3</option>
-                                        <option>4</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="offer-equipaje" class="block text-sm font-medium text-gray-700">Capacidad de Equipaje</label>
-                                    <select id="offer-equipaje" required class="form-select mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                        <option>Pequeña</option>
-                                        <option>Mediana</option>
-                                        <option>Grande</option>
-                                        <option>No se permite</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="border-t border-gray-200 pt-6">
-                                <h3 class="text-lg font-medium text-gray-900">Costo del Viaje</h3>
-                                <p class="text-sm text-gray-500 mt-1">Calcularemos un precio sugerido. Puedes ajustarlo hasta un 15%.</p>
-                                <div class="mt-4 bg-blue-50 p-4 rounded-lg text-center">
-                                    <p class="text-gray-600">Precio Sugerido Total</p>
-                                    <p id="precio-sugerido" class="text-3xl font-bold text-blue-600">$0.00</p>
-                                    <p id="precio-info" class="text-xs text-gray-500 mt-1">Ingresa origen y destino para calcular.</p>
-                                </div>
-                                <div class="mt-4">
-                                     <label for="price-adjustment" class="block text-sm font-medium text-gray-700">Ajuste de Precio (<span id="adjustment-value">0</span>%)</label>
-                                     <input type="range" id="price-adjustment" min="-15" max="15" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                                </div>
-                                <div class="mt-4 bg-green-50 p-4 rounded-lg text-center">
-                                    <p class="text-gray-600">Precio Final por Pasajero</p>
-                                    <p id="precio-final-pasajero" class="text-3xl font-bold text-green-600">$0.00</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <button type="submit" class="btn-primary px-6 py-2 rounded-md font-semibold">Publicar Viaje</button>
-                            </div>
-                        </form>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="text-xl font-bold text-center mb-4">Distribución por Tipo</h3>
+                     <div class="chart-container">
+                        <canvas id="typeChart"></canvas>
                     </div>
                 </div>
             </section>
 
-            <section id="mis-viajes" class="app-section hidden-section">
-                 <div class="max-w-4xl mx-auto">
-                    <div class="text-center mb-12">
-                        <h1 class="text-4xl font-bold tracking-tight text-gray-900">Mis Viajes y Solicitudes</h1>
-                        <p class="mt-4 text-lg leading-8 text-gray-600">Gestiona tus viajes publicados y las solicitudes de pasajeros.</p>
+            <section class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <h3 class="text-2xl font-bold mb-6">Listado de Tareas</h3>
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <div>
+                        <label for="priority-filter" class="block text-sm font-medium text-gray-700">Filtrar por Prioridad</label>
+                        <select id="priority-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="all">Todas</option>
+                            <option value="CRÍTICA">Crítica</option>
+                            <option value="ALTA">Alta</option>
+                            <option value="MEDIA">Media</option>
+                            <option value="BAJA">Baja</option>
+                            <option value="PENDIENTE">Pendiente</option>
+                        </select>
                     </div>
-                    <div id="my-trips-content" class="space-y-8">
-                        <p class="text-center text-gray-500">Aquí verás los viajes que publiques y las solicitudes de los pasajeros que quieran unirse.</p>
+                    <div>
+                        <label for="status-filter" class="block text-sm font-medium text-gray-700">Filtrar por Estado</label>
+                        <select id="status-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="all">Todos</option>
+                            <option value="Por Hacer">Por Hacer</option>
+                            <option value="En Desarrollo">En Desarrollo</option>
+                            <option value="Pendiente">Pendiente</option>
+                        </select>
                     </div>
                 </div>
-            </section>
-
-            <section id="perfil" class="app-section hidden-section">
-                <div class="max-w-2xl mx-auto">
-                    <div class="text-center mb-12">
-                        <h1 class="text-4xl font-bold tracking-tight text-gray-900">Mi Perfil</h1>
-                        <p class="mt-4 text-lg leading-8 text-gray-600">Actualiza tu información personal y de contacto.</p>
-                    </div>
-                    <div class="bg-white p-8 rounded-xl shadow-md">
-                        <div class="flex items-center space-x-6 mb-8">
-                            <img class="h-24 w-24 rounded-full object-cover" src="https://placehold.co/100x100/EBF4FF/3B82F6?text=U" alt="Foto de perfil">
-                            <div>
-                                <h2 id="profile-name" class="text-2xl font-bold">Usuario Anónimo</h2>
-                                <p id="profile-rating" class="text-gray-500">4.8 ⭐ (15 viajes)</p>
-                            </div>
-                        </div>
-                        <form id="profile-form" class="space-y-4">
-                            <div>
-                                <label for="profile-nombre" class="block text-sm font-medium text-gray-700">Nombre Completo</label>
-                                <input type="text" id="profile-nombre" class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Tu Nombre">
-                            </div>
-                            <div>
-                                <label for="profile-whatsapp" class="block text-sm font-medium text-gray-700">Número de WhatsApp</label>
-                                <input type="tel" id="profile-whatsapp" class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="+54 9 3492 123456">
-                            </div>
-                            <div class="text-right pt-4">
-                                <button type="submit" class="btn-primary px-6 py-2 rounded-md font-semibold">Guardar Cambios</button>
-                            </div>
-                        </form>
-                    </div>
+                <div id="task-list" class="space-y-4">
                 </div>
             </section>
         </main>
     </div>
 
-    <div id="trip-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div class="modal-backdrop fixed inset-0"></div>
-        <div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative transform scale-95">
-        </div>
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tasks = [
+                { id: 'C&P (Global)', title: 'Perfil Wizard no finaliza', detail: 'El wizard del perfil nunca termina de ejecutar bien el último paso, volviendo a mostrarse al entrar, impidiendo el uso a nuevos usuarios. Además, vuelve a pedir el email.', priority: 'CRÍTICA', status: 'Por Hacer', type: 'Bug' },
+                { id: 'E3 (Bug)', title: 'Cargar viajes falla (Error 500)', detail: 'La funcionalidad de cargar viajes está fallando con un error 500.', priority: 'CRÍTICA', status: 'Por Hacer', type: 'Bug' },
+                { id: 'C&P (E2)', title: 'Admin: Gestión de Usuarios', detail: 'La sección de administración de usuarios para los admins no permite crear, modificar y eliminar usuarios (necesario para moderar y suspender/eliminar bots).', priority: 'ALTA', status: 'Por Hacer', type: 'Mejora' },
+                { id: 'E3 (Missing)', title: 'Falta Alta de Conductor', detail: 'No se encuentra la feature de poder darse de alta como conductor, incluyendo la subida de una imagen requerida (DNI, foto auto, etc.).', priority: 'ALTA', status: 'Por Hacer', type: 'Feature' },
+                { id: 'E3 (Bug)', title: 'Filtros de Viajes no funcionan', detail: 'Los filtros no funcionan en la lista de viajes; siempre se muestran los mismos viajes.', priority: 'ALTA', status: 'Por Hacer', type: 'Bug' },
+                { id: 'E3 (Bug)', title: 'Detalle de Viajes Hardcodeado', detail: 'Al clickear los viajes, todos abren la misma ventana de detalles hardcodeados.', priority: 'ALTA', status: 'Por Hacer', type: 'Bug' },
+                { id: 'E4 (Feature)', title: 'Flujo completo de solicitar unirse a un viaje', detail: 'Implementar el flujo de solicitud, aceptación y rechazo.', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
+                { id: 'E4 (Feature)', title: 'Notificaciones de solicitud y aceptación/rechazo por mail', detail: 'Implementar las notificaciones por correo electrónico.', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
+                { id: 'E4 (Feature)', title: 'Flujo de marcar un viaje como finalizado', detail: 'Implementar la funcionalidad de finalización del viaje.', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
+                { id: 'C&P (E3)', title: 'Botón \'Mis Viajes\' no funciona', detail: 'Hay un segundo botón en la sección "Mis Viajes" para publicar viajes que no funciona.', priority: 'MEDIA', status: 'Por Hacer', type: 'Bug' },
+                { id: 'E4 (Feature)', title: 'Foto de Viaje Editable', detail: 'Foto guardada por viaje, tomando por default la del auto del usuario, pero pudiendo subir otra.', priority: 'MEDIA', status: 'En Desarrollo', type: 'Feature' },
+                { id: 'Comentario', title: 'Redirect de Social Login', detail: 'Al loguearse con redes sociales, el redirect no lleva a la página que uno estaba intentando acceder (el bug no ocurre con mail/password).', priority: 'MEDIA', status: 'Por Hacer', type: 'Mejora' },
+                { id: 'E3 (Feature)', title: 'Poder cargar viajes', detail: 'Carga de viajes (asumiendo que el error 500 es el único pendiente).', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
+                { id: 'E3 (Feature)', title: 'Poder listar viajes con al menos 3 filtros', detail: 'Listado de viajes con filtros.', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
+                { id: 'E3 (Feature)', title: 'Ver detalle de cada viaje', detail: 'Desde la lista, poder entrar a ver el detalle de cada viaje.', priority: 'ALTA', status: 'En Desarrollo', type: 'Feature' },
+                { id: 'E5 (Pendiente)', title: 'Búsqueda de Texto Completo', detail: 'El sitio debe permitir búsqueda de texto completo sobre el contenido del sitio (ej: buscar por descripción o comentarios).', priority: 'BAJA', status: 'Pendiente', type: 'Idea' },
+                { id: 'E5 (Idea 1)', title: 'Sistema de Rating y Reseñas', detail: 'Los conductores y pasajeros pueden calificarse mutuamente al finalizar un viaje.', priority: 'BAJA', status: 'Pendiente', type: 'Idea' },
+                { id: 'E5 (Idea 2)', title: 'Historial de Viajes Detallado', detail: 'Sección para que cada usuario pueda ver un historial completo de sus viajes realizados y pendientes.', priority: 'BAJA', status: 'Pendiente', type: 'Idea' },
+            ];
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const app = {
-        state: {
-            isLoggedIn: false,
-            currentUser: {
-                name: 'Usuario Anónimo',
-                rating: 4.8,
-                trips: 15,
-                whatsapp: ''
-            },
-            currentSection: 'buscar-viaje',
-        },
-        
-        mockData: {
-            trips: [
-                { id: 1, driver: 'Ana García', rating: 4.9, origin: 'Santa Fe', destination: 'Rafaela', via: ['Esperanza'], date: '2025-08-15', time: '08:00', seats: 2, price: 2500, luggage: 'Mediana', smoking: false, pets: false, vehicle: 'Toyota Corolla', notes: 'Salida puntual. Música tranquila y paradas cortas.' },
-                { id: 2, driver: 'Carlos Ruiz', rating: 4.7, origin: 'Rosario', destination: 'Rafaela', via: ['San Lorenzo', 'Sunchales'], date: '2025-08-15', time: '17:30', seats: 1, price: 3200, luggage: 'Pequeña', smoking: true, pets: false, vehicle: 'Fiat Cronos', notes: 'Puedo desviarme un poco de la ruta si es necesario.' },
-                { id: 3, driver: 'Lucía Méndez', rating: 5.0, origin: 'Paraná', destination: 'Sunchales', via: ['Santa Fe', 'Rafaela'], date: '2025-08-16', time: '10:00', seats: 3, price: 2800, luggage: 'Grande', smoking: false, pets: true, vehicle: 'Renault Duster', notes: 'Viajo con mi perro, es amigable. Amplio espacio para equipaje.' },
-                { id: 4, driver: 'Javier Sosa', rating: 4.6, origin: 'Santa Fe', destination: 'Reconquista', via: ['San Justo'], date: '2025-08-17', time: '06:00', seats: 2, price: 4500, luggage: 'Mediana', smoking: false, pets: false, vehicle: 'Chevrolet Onix', notes: 'Viaje directo, sin paradas.' },
-            ],
-            myTrips: [],
-            cities: {
-                'Santa Fe': { 'Rafaela': 100, 'Rosario': 170, 'Paraná': 25, 'Reconquista': 325 },
-                'Rosario': { 'Rafaela': 240, 'Santa Fe': 170 },
-                'Paraná': { 'Rafaela': 125, 'Sunchales': 160 }
-            }
-        },
+            const priorityFilter = document.getElementById('priority-filter');
+            const statusFilter = document.getElementById('status-filter');
+            const taskListContainer = document.getElementById('task-list');
 
-        init() {
-            this.cacheDOM();
-            this.bindEvents();
-            this.renderTrips(this.mockData.trips);
-            this.updateUIForAuthState();
-        },
-
-        cacheDOM() {
-            this.dom = {
-                navLinks: document.querySelectorAll('.nav-link'),
-                sections: document.querySelectorAll('.app-section'),
-                authButton: document.getElementById('authButton'),
-                searchForm: document.getElementById('search-form'),
-                tripList: document.getElementById('trip-list'),
-                noResults: document.getElementById('no-results'),
-                modal: document.getElementById('trip-modal'),
-                modalContent: document.querySelector('.modal-content'),
-                modalBackdrop: document.querySelector('.modal-backdrop'),
-                offerForm: document.getElementById('offer-form'),
-                priceSugerido: document.getElementById('precio-sugerido'),
-                priceInfo: document.getElementById('precio-info'),
-                priceAdjustment: document.getElementById('price-adjustment'),
-                adjustmentValue: document.getElementById('adjustment-value'),
-                precioFinalPasajero: document.getElementById('precio-final-pasajero'),
-                offerAsientos: document.getElementById('offer-asientos'),
-                myTripsContent: document.getElementById('my-trips-content'),
-                profileName: document.getElementById('profile-name'),
-                profileRating: document.getElementById('profile-rating'),
-                profileForm: document.getElementById('profile-form'),
+            const priorityColors = {
+                'CRÍTICA': { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-500' },
+                'ALTA': { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-500' },
+                'MEDIA': { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-500' },
+                'BAJA': { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-500' },
+                'PENDIENTE': { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-500' }
             };
-        },
 
-        bindEvents() {
-            this.dom.navLinks.forEach(link => {
-                link.addEventListener('click', (e) => this.handleNav(e));
-            });
-            this.dom.authButton.addEventListener('click', () => this.toggleAuth());
-            this.dom.searchForm.addEventListener('submit', (e) => this.handleSearch(e));
-            this.dom.tripList.addEventListener('click', (e) => this.handleTripClick(e));
-            this.dom.modalBackdrop.addEventListener('click', () => this.closeModal());
-            this.dom.offerForm.addEventListener('submit', (e) => this.handleOfferSubmit(e));
+            const chartColors = {
+                'CRÍTICA': 'rgba(239, 68, 68, 0.8)',
+                'ALTA': 'rgba(249, 115, 22, 0.8)',
+                'MEDIA': 'rgba(234, 179, 8, 0.8)',
+                'BAJA': 'rgba(59, 130, 246, 0.8)',
+                'PENDIENTE': 'rgba(107, 114, 128, 0.8)'
+            };
             
-            const priceInputs = ['offer-origen', 'offer-destino'];
-            priceInputs.forEach(id => {
-                document.getElementById(id).addEventListener('input', () => this.calculatePrice());
-            });
-            this.dom.priceAdjustment.addEventListener('input', () => this.calculatePrice());
-            this.dom.offerAsientos.addEventListener('change', () => this.calculatePrice());
-        },
-
-        handleNav(e) {
-            const sectionId = e.target.dataset.section;
-            if (!sectionId) return;
-
-            if (['ofrecer-viaje', 'mis-viajes', 'perfil'].includes(sectionId) && !this.state.isLoggedIn) {
-                alert('Debes iniciar sesión para acceder a esta sección.');
-                return;
-            }
-
-            this.state.currentSection = sectionId;
+            const typeChartColors = {
+                'Bug': 'rgba(239, 68, 68, 0.7)',
+                'Feature': 'rgba(59, 130, 246, 0.7)',
+                'Mejora': 'rgba(16, 185, 129, 0.7)',
+                'Idea': 'rgba(168, 85, 247, 0.7)'
+            };
             
-            this.dom.navLinks.forEach(link => {
-                link.classList.toggle('active', link.dataset.section === sectionId);
-            });
-
-            this.dom.sections.forEach(section => {
-                section.classList.toggle('hidden-section', section.id !== sectionId);
-            });
-            
-            if (sectionId === 'mis-viajes') {
-                this.renderMyTrips();
-            }
-        },
-
-        toggleAuth() {
-            this.state.isLoggedIn = !this.state.isLoggedIn;
-            this.updateUIForAuthState();
-        },
-
-        updateUIForAuthState() {
-            if (this.state.isLoggedIn) {
-                this.dom.authButton.textContent = 'Cerrar Sesión';
-                this.dom.authButton.classList.remove('btn-primary');
-                this.dom.authButton.classList.add('btn-secondary');
-                this.dom.profileName.textContent = 'Juan Pérez';
-            } else {
-                this.dom.authButton.textContent = 'Iniciar Sesión';
-                this.dom.authButton.classList.add('btn-primary');
-                this.dom.authButton.classList.remove('btn-secondary');
-                this.dom.profileName.textContent = 'Usuario Anónimo';
-                if (this.state.currentSection !== 'buscar-viaje') {
-                    document.querySelector('.nav-link[data-section="buscar-viaje"]').click();
+            const ctxPriority = document.getElementById('priorityChart').getContext('2d');
+            const priorityChart = new Chart(ctxPriority, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderColor: 'rgba(255, 255, 255, 0.8)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
                 }
-            }
-        },
-        
-        formatCurrency(value) {
-            return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(value);
-        },
-
-        renderTrips(trips) {
-            this.dom.tripList.innerHTML = '';
-            if (trips.length === 0) {
-                this.dom.noResults.classList.remove('hidden');
-                return;
-            }
-            this.dom.noResults.classList.add('hidden');
-
-            trips.forEach(trip => {
-                const card = document.createElement('div');
-                card.className = 'card bg-white rounded-lg shadow-md overflow-hidden cursor-pointer p-5 flex flex-col justify-between';
-                card.dataset.tripId = trip.id;
-                card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="font-semibold text-gray-500 text-sm">${trip.driver} <span class="text-yellow-500">⭐ ${trip.rating}</span></div>
-                            <div class="text-sm font-bold text-green-600 bg-green-100 px-2 py-1 rounded">${this.formatCurrency(trip.price)}</div>
-                        </div>
-                        <h3 class="text-lg font-bold text-gray-800">${trip.origin} → ${trip.destination}</h3>
-                        <p class="text-gray-600 text-sm mt-1">${new Date(trip.date + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - ${trip.time} hs</p>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm text-gray-500">
-                        <span>💺 ${trip.seats} asientos</span>
-                        <span>🧳 ${trip.luggage}</span>
-                        <span>${trip.pets ? '🐾' : '🐾🚫'}</span>
-                    </div>
-                `;
-                this.dom.tripList.appendChild(card);
-            });
-        },
-
-        handleSearch(e) {
-            e.preventDefault();
-            const formData = new FormData(this.dom.searchForm);
-            const origin = formData.get('origen').toLowerCase();
-            const destination = formData.get('destino').toLowerCase();
-            const date = formData.get('fecha');
-
-            const filteredTrips = this.mockData.trips.filter(trip => {
-                const matchOrigin = !origin || trip.origin.toLowerCase().includes(origin) || (trip.via && trip.via.some(v => v.toLowerCase().includes(origin)));
-                const matchDestination = !destination || trip.destination.toLowerCase().includes(destination);
-                const matchDate = !date || trip.date === date;
-                return matchOrigin && matchDestination && matchDate;
             });
 
-            this.renderTrips(filteredTrips);
-        },
-        
-        handleTripClick(e) {
-            const card = e.target.closest('.card');
-            if (card) {
-                const tripId = parseInt(card.dataset.tripId);
-                const trip = this.mockData.trips.find(t => t.id === tripId);
-                this.openModal(trip);
-            }
-        },
+            const ctxType = document.getElementById('typeChart').getContext('2d');
+            const typeChart = new Chart(ctxType, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Cantidad de Tareas',
+                        data: [],
+                        backgroundColor: [],
+                        borderColor: [],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
 
-        openModal(trip) {
-            this.dom.modalContent.innerHTML = `
-                <div class="p-6 sm:p-8">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-900">${trip.origin} → ${trip.destination}</h2>
-                            <p class="text-gray-600 mt-1">Conducido por <span class="font-semibold">${trip.driver}</span> <span class="text-yellow-500">⭐ ${trip.rating}</span></p>
-                        </div>
-                        <button id="close-modal" class="text-gray-400 hover:text-gray-600">&times;</button>
-                    </div>
+            function renderTasks(filteredTasks) {
+                taskListContainer.innerHTML = '';
+                if(filteredTasks.length === 0) {
+                    taskListContainer.innerHTML = `<p class="text-center text-gray-500 py-4">No se encontraron tareas con los filtros seleccionados.</p>`;
+                }
+
+                // URL base para Google Sheets (URL REAL proporcionada por el usuario)
+                // Se utiliza el parámetro 'task_id' para identificar la tarea en la hoja de cálculo.
+                const sheetsBaseUrl = "https://docs.google.com/spreadsheets/d/1TFVvaPfWvEqFdhTG0BZEaQ_n0ZMYuYY5rrxTWgEU_Rg/edit?gid=0#gid=0";
+                
+                filteredTasks.forEach(task => {
+                    const colors = priorityColors[task.priority] || priorityColors['PENDIENTE'];
                     
-                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="font-semibold text-gray-800">Fecha y Hora</p>
-                            <p class="text-gray-600">${new Date(trip.date + 'T00:00:00').toLocaleDateString('es-AR', { dateStyle: 'full' })}</p>
-                            <p class="text-gray-600">Salida a las ${trip.time} hs</p>
-                        </div>
-                        <div class="bg-green-50 p-4 rounded-lg">
-                            <p class="font-semibold text-gray-800">Precio por Pasajero</p>
-                            <p class="text-2xl font-bold text-green-700">${this.formatCurrency(trip.price)}</p>
-                        </div>
-                    </div>
+                    // Construir el link con el ID de la tarea
+                    const noteLinkUrl = `${sheetsBaseUrl}&task_id=${encodeURIComponent(task.id)}`;
 
-                    <div class="mt-6 border-t pt-6">
-                        <h3 class="font-semibold text-gray-800 mb-2">Detalles del Viaje</h3>
-                        <div class="space-y-2 text-gray-700">
-                            <p><strong>Asientos disponibles:</strong> ${trip.seats}</p>
-                            <p><strong>Equipaje permitido:</strong> ${trip.luggage}</p>
-                            <p><strong>Vehículo:</strong> ${trip.vehicle}</p>
-                            <p><strong>Fumadores:</strong> ${trip.smoking ? 'Permitido' : 'No permitido'}</p>
-                            <p><strong>Mascotas:</strong> ${trip.pets ? 'Permitidas' : 'No permitidas'}</p>
+                    const taskElement = `
+                        <div class="border-l-4 ${colors.border} ${colors.bg} p-4 rounded-r-lg shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-sm font-semibold ${colors.text}">${task.id}</span>
+                                    <h4 class="font-bold text-lg">${task.title}</h4>
+                                </div>
+                                <span class="px-3 py-1 text-sm font-semibold rounded-full ${colors.bg} ${colors.text}">${task.priority}</span>
+                            </div>
+                            <p class="mt-2 text-gray-600">${task.detail}</p>
+                            <div class="mt-3 pt-3 border-t border-gray-300 flex justify-end">
+                                <a href="${noteLinkUrl}" target="_blank" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out bg-indigo-50 px-3 py-1 rounded-md shadow-sm hover:shadow-md flex items-center">
+                                    <span class="mr-1">&#9998;</span>
+                                    Agregar/Ver Notas
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="mt-6">
-                        <h3 class="font-semibold text-gray-800 mb-2">Notas del Conductor</h3>
-                        <p class="text-gray-700 bg-gray-50 p-4 rounded-lg italic">"${trip.notes}"</p>
-                    </div>
-                </div>
-                <div class="px-6 py-4 bg-gray-50 border-t flex flex-col sm:flex-row gap-2">
-                    <button id="contact-whatsapp" class="btn-primary w-full sm:w-auto flex-grow px-6 py-3 rounded-md font-semibold">Contactar por WhatsApp</button>
-                    <button id="request-trip" class="btn-secondary w-full sm:w-auto px-6 py-3 rounded-md font-semibold">Solicitar unirme al viaje</button>
-                </div>
-            `;
-            this.dom.modal.classList.remove('hidden');
-            this.dom.modal.classList.add('flex');
-            setTimeout(() => this.dom.modalContent.classList.remove('scale-95'), 10);
-            
-            document.getElementById('close-modal').addEventListener('click', () => this.closeModal());
-            document.getElementById('request-trip').addEventListener('click', () => {
-                if (!this.state.isLoggedIn) {
-                    alert('Debes iniciar sesión para solicitar unirte a un viaje.');
-                    return;
-                }
-                const existingRequest = this.mockData.myTrips.find(t => t.id === trip.id);
-                if (existingRequest) {
-                    alert('Ya has solicitado unirte a este viaje.');
-                    return;
-                }
-                this.mockData.myTrips.push({...trip, status: 'solicitado'});
-                alert('¡Solicitud enviada! El conductor revisará tu pedido. Puedes ver el estado en "Mis Viajes".');
-                this.closeModal();
-            });
-        },
-
-        closeModal() {
-            this.dom.modalContent.classList.add('scale-95');
-            setTimeout(() => {
-                this.dom.modal.classList.add('hidden');
-                this.dom.modal.classList.remove('flex');
-            }, 300);
-        },
-        
-        calculatePrice() {
-            const origen = document.getElementById('offer-origen').value;
-            const destino = document.getElementById('offer-destino').value;
-            const asientos = parseInt(this.dom.offerAsientos.value);
-            const adjustment = parseInt(this.dom.priceAdjustment.value);
-            
-            this.dom.adjustmentValue.textContent = adjustment;
-
-            if (!origen || !destino) {
-                this.dom.priceSugerido.textContent = '$0.00';
-                this.dom.precioFinalPasajero.textContent = '$0.00';
-                this.dom.priceInfo.textContent = 'Ingresa origen y destino para calcular.';
-                return;
+                    `;
+                    taskListContainer.innerHTML += taskElement;
+                });
             }
 
-            const distance = this.mockData.cities[origen]?.[destino] || 200; 
-            const costPerKm = 50;
-            const basePrice = distance * costPerKm;
+            function updateDashboard() {
+                const priority = priorityFilter.value;
+                const status = statusFilter.value;
 
-            this.dom.priceInfo.textContent = `Basado en una distancia estimada de ${distance} km.`;
-            this.dom.priceSugerido.textContent = this.formatCurrency(basePrice);
-            
-            const finalPriceTotal = basePrice * (1 + adjustment / 100);
-            const pricePerPassenger = finalPriceTotal / asientos;
-            
-            this.dom.precioFinalPasajero.textContent = this.formatCurrency(pricePerPassenger);
-        },
+                const filteredTasks = tasks.filter(task => {
+                    const priorityMatch = priority === 'all' || task.priority === priority;
+                    const statusMatch = status === 'all' || task.status === status;
+                    return priorityMatch && statusMatch;
+                });
 
-        handleOfferSubmit(e) {
-            e.preventDefault();
-            if (!this.state.isLoggedIn) {
-                alert('Debes iniciar sesión para publicar un viaje.');
-                return;
+                renderTasks(filteredTasks);
+                updateKPIs(filteredTasks);
+                updateCharts(filteredTasks);
             }
-            alert('Viaje publicado con éxito. Podrás gestionarlo desde la sección "Mis Viajes".');
-            this.dom.offerForm.reset();
-            this.calculatePrice();
-        },
-        
-        renderMyTrips() {
-            if (this.mockData.myTrips.length === 0) {
-                this.dom.myTripsContent.innerHTML = '<p class="text-center text-gray-500">No tienes solicitudes de viaje activas.</p>';
-                return;
-            }
-            
-            this.dom.myTripsContent.innerHTML = '';
-            this.mockData.myTrips.forEach(trip => {
-                const tripCard = document.createElement('div');
-                tripCard.className = 'bg-white p-5 rounded-lg shadow-md flex items-center justify-between';
-                
-                let statusHTML = '';
-                let actionsHTML = '';
-                
-                switch(trip.status) {
-                    case 'solicitado':
-                        statusHTML = '<span class="text-sm font-medium bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">Solicitud Enviada</span>';
-                        actionsHTML = '<button class="btn-secondary text-sm px-3 py-1 rounded-md">Cancelar Solicitud</button>';
-                        break;
-                    case 'aprobado':
-                        statusHTML = '<span class="text-sm font-medium bg-green-100 text-green-800 px-3 py-1 rounded-full">Viaje Confirmado</span>';
-                        actionsHTML = '<a href="#" class="text-blue-600 hover:underline text-sm font-semibold">Ver Detalles</a>';
-                        break;
-                }
-                
-                tripCard.innerHTML = `
-                    <div>
-                        <h3 class="font-bold">${trip.origin} → ${trip.destination}</h3>
-                        <p class="text-sm text-gray-500">Conductor: ${trip.driver} - ${trip.date}</p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        ${statusHTML}
-                        ${actionsHTML}
-                    </div>
-                `;
-                this.dom.myTripsContent.appendChild(tripCard);
-            });
-        }
-    };
 
-    app.init();
-});
-</script>
+            function updateKPIs(filteredTasks) {
+                document.getElementById('total-tasks').textContent = filteredTasks.length;
+                document.getElementById('critical-tasks').textContent = tasks.filter(t => t.priority === 'CRÍTICA').length;
+                document.getElementById('developing-tasks').textContent = tasks.filter(t => t.status === 'En Desarrollo').length;
+                document.getElementById('pending-tasks').textContent = tasks.filter(t => t.status === 'Pendiente').length;
+            }
+
+            function updateCharts(filteredTasks) {
+                const priorityCounts = {};
+                filteredTasks.forEach(task => {
+                    priorityCounts[task.priority] = (priorityCounts[task.priority] || 0) + 1;
+                });
+                
+                const priorityLabels = Object.keys(priorityCounts);
+                priorityChart.data.labels = priorityLabels;
+                priorityChart.data.datasets[0].data = Object.values(priorityCounts);
+                priorityChart.data.datasets[0].backgroundColor = priorityLabels.map(label => chartColors[label]);
+                priorityChart.update();
+
+                const typeCounts = {};
+                filteredTasks.forEach(task => {
+                    typeCounts[task.type] = (typeCounts[task.type] || 0) + 1;
+                });
+                const typeLabels = Object.keys(typeCounts);
+                typeChart.data.labels = typeLabels;
+                typeChart.data.datasets[0].data = Object.values(typeCounts);
+                typeChart.data.datasets[0].backgroundColor = typeLabels.map(label => typeChartColors[label] || 'rgba(156, 163, 175, 0.7)');
+                typeChart.update();
+            }
+
+            priorityFilter.addEventListener('change', updateDashboard);
+            statusFilter.addEventListener('change', updateDashboard);
+            
+            updateDashboard();
+        });
+    </script>
+
 </body>
 </html>
