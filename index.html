@@ -312,7 +312,7 @@
                     toastElement.classList.add('opacity-0', 'pointer-events-none');
                     // Abre el Google Sheet en una nueva pestaña (que ejecutará el Apps Script para filtrar)
                     window.open(linkUrl, '_blank');
-                }, 3000);
+                }, 4000);
             }
 
             // Manejador del clic: COPIA el ID, muestra el toast y redirige
@@ -321,10 +321,10 @@
                 let message = `Filtro aplicado para la Tarea: ${taskId}. `;
 
                 if (isCopied) {
-                    message += `El ID se ha copiado automáticamente al portapapeles. ¡Solo presiona CTRL+V en la fila de tu hoja! Redirigiendo en 3 segundos.`;
+                    message += `El ID se ha copiado automáticamente al portapapeles. ¡Solo presiona CTRL+V en la fila de tu hoja! Redirigiendo en 4 segundos.`;
                 } else {
                     // Mensaje de respaldo si el copiado falla (poco común)
-                    message += `El ID NO pudo ser copiado automáticamente. Por favor, cópielo manualmente. Redirigiendo en 3 segundos.`;
+                    message += `El ID NO pudo ser copiado automáticamente. Por favor, cópielo manualmente. Redirigiendo en 4 segundos.`;
                 }
 
                 showToast(message, linkUrl);
